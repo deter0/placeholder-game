@@ -30,7 +30,7 @@ private fn void init_allegro(void) {
     exit(-1);
   }
   
-  for (i32 i = 0; i < sizeof_array(allegro_to_init); i++) {
+  for (u32 i = 0; i < sizeof_array(allegro_to_init); i++) {
     if (allegro_to_init[i]() == false) {
       fprintf(stderr, "Error initalizing allegro-5 (Failed at index %d).\n", i);
       exit(-1);
@@ -45,6 +45,8 @@ int main(int argc, char **argv) {
   printf("[DEBUG] Resource Manager inited.\n");
   
   ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
+  ASSERT_ERR(rm_create_font("mw_16", "resources/Merriweather.ttf", 16));
+  ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_flags(ALLEGRO_RESIZABLE | ALLEGRO_OPENGL_3_0);
   ALLEGRO_DISPLAY *display = al_create_display(1280, 720);
@@ -92,8 +94,14 @@ int main(int argc, char **argv) {
         ALLEGRO_BITMAP *heart;
         ASSERT_ERR(rm_get_image("heart", &heart));
 
+        ALLEGRO_FONT *mw_16;
+        ASSERT_ERR(rm_get_font("mw_16", &mw_16));
+        al_draw_text(mw_16, al_map_rgb(255, 255, 255), 50, 300, 0, "Hello, World!");
+
         al_draw_bitmap(heart, 24, 24, 0);
         al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
+        
+        al_draw_filled_circle(600, 600, 200, al_map_rgb(255, 0, 255));
         
         al_flip_display();
       } break;

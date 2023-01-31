@@ -17,7 +17,7 @@ fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_b
 fn err_code rm_delete_image(const char *image_name);
 fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output);
 
-fn err_code rm_create_font(const char *font_name, const char *file_path);
+fn fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size);
 fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font);
 fn err_code rm_delete_font(const char *font_name);
 fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output);
