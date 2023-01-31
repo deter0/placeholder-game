@@ -10,6 +10,8 @@
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_acodec.h>
 
+#include "resource_manager.h"
+
 #include "p/p.h"
 #include "p/pv.h"
 #include "p/parr.h"
@@ -39,9 +41,10 @@ private fn void init_allegro(void) {
 int main(int argc, char **argv) {
   init_allegro();
   printf("[DEBUG] Allegro inited.\n");
+  ASSERT_ERR(rm_init());
+  printf("[DEBUG] Resource Manager inited.\n");
   
-  ALLEGRO_BITMAP *image = al_load_bitmap("./resources/heart.png");
-  assert(image != 0);
+  ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
   
   al_set_new_display_flags(ALLEGRO_RESIZABLE | ALLEGRO_OPENGL_3_0);
   ALLEGRO_DISPLAY *display = al_create_display(1280, 720);
@@ -86,7 +89,10 @@ int main(int argc, char **argv) {
     switch (event.type) {
       case (ALLEGRO_EVENT_TIMER): {
         al_clear_to_color(al_map_rgba(24, 0, 16, 0));
-        al_draw_bitmap(image, 24, 24, 0);
+        ALLEGRO_BITMAP *heart;
+        ASSERT_ERR(rm_get_image("heart", &heart));
+
+        al_draw_bitmap(heart, 24, 24, 0);
         al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
         
         al_flip_display();

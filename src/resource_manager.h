@@ -10,6 +10,8 @@
 
 #include "p/p.h"
 
+fn err_code rm_init(void);
+
 fn err_code rm_create_image(const char *image_name, const char *file_path);
 fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap);
 fn err_code rm_delete_image(const char *image_name);

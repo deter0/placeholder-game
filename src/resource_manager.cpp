@@ -8,16 +8,32 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_audio.h>
 
+#include "hashmap.h"
+
 #include "p/p.h"
 
-#include <unordered_map>
+#define IMAGES_INITIAL_SIZE 256
+struct hashmap_s loaded_images;
 
-private std::unordered_map<const char*, ALLEGRO_BITMAP*> loaded_images;
-private std::unordered_map<const char*, ALLEGRO_FONT*>   loaded_fonts;
+#define FONTS_INITIAL_SIZE 8
+struct hashmap_s loaded_fonts;
+
+fn err_code rm_init(void) {
+  if (hashmap_create(IMAGES_INITIAL_SIZE, &loaded_images) != 0) {
+    return ERR_NOKAY;
+  }
+  if (hashmap_create(FONTS_INITIAL_SIZE, &loaded_fonts) != 0) {
+    return ERR_NOKAY;
+  }
+  return ERR_OKAY;
+}
 
 fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap) {
-  if (loaded_images.find(image_name) != loaded_images.end()) {
-    loaded_images[image_name] = precreated_bitmap;
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
+  if (image == NULL) {
+    if (hashmap_put(&loaded_images, image_name, strlen(image_name), precreated_bitmap) != 0) {
+      return ERR_RM;
+    }
     return ERR_OKAY;
   } else {
     return ERR_RM_RESOURCE_EXISTS;
@@ -39,19 +55,29 @@ fn err_code rm_create_image(const char *image_name, const char *file_path) {
 }
 
 fn err_code rm_delete_image(const char *image_name) {
-  if (loaded_images.find(image_name) != loaded_images.end()) {
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
+
+  if (image == NULL) {
     return ERR_RM_NOT_FOUND;
   } else {
-    ALLEGRO_BITMAP *image = loaded_images.at(image_name);
+    if (hashmap_remove(&loaded_images, image_name, strlen(image_name) != 0)) {
+      return ERR_RM;
+    }
     al_destroy_bitmap(image);
-    loaded_images.erase(image_name);
-    
     return ERR_OKAY;
   }
 }
 
 fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output) {
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
   
+  if (image == NULL) {
+    (*bitmap_output) = NULL;
+    return ERR_RM_NOT_FOUND;
+  } else {
+    (*bitmap_output) = image;
+    return ERR_OKAY;
+  }
 }
 
 
