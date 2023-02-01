@@ -15,8 +15,11 @@
 #define IMAGES_INITIAL_SIZE 256
 struct hashmap_s loaded_images;
 
-#define FONTS_INITIAL_SIZE 8
+#define FONTS_INITIAL_SIZE 16
 struct hashmap_s loaded_fonts;
+
+#define AUDIO_STREAM_INITIAL_SIZE 16
+struct hashmap_s loaded_audio_streams;
 
 fn err_code rm_init(void) {
   if (hashmap_create(IMAGES_INITIAL_SIZE, &loaded_images) != 0) {
@@ -25,15 +28,21 @@ fn err_code rm_init(void) {
   if (hashmap_create(FONTS_INITIAL_SIZE, &loaded_fonts) != 0) {
     return ERR_NOKAY;
   }
+  if (hashmap_create(AUDIO_STREAM_INITIAL_SIZE, &loaded_audio_streams) != 0) {
+    return ERR_NOKAY;
+  }
   return ERR_OKAY;
 }
 
 // ++ Images ++
 
 fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap) {
-  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
+                                                       image_name,
+                                                       strlen(image_name));
   if (image == NULL) {
-    if (hashmap_put(&loaded_images, image_name, strlen(image_name), precreated_bitmap) != 0) {
+    if (hashmap_put(&loaded_images, image_name,
+                    strlen(image_name), precreated_bitmap) != 0) {
       return ERR_RM;
     }
     return ERR_OKAY;
@@ -57,7 +66,9 @@ fn err_code rm_create_image(const char *image_name, const char *file_path) {
 }
 
 fn err_code rm_delete_image(const char *image_name) {
-  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
+                                                      image_name,
+                                                      strlen(image_name));
 
   if (image == NULL) {
     return ERR_RM_NOT_FOUND;
@@ -71,7 +82,9 @@ fn err_code rm_delete_image(const char *image_name) {
 }
 
 fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output) {
-  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images, image_name, strlen(image_name));
+  ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
+                                                      image_name,
+                                                      strlen(image_name));
   
   if (image == NULL) {
     (*bitmap_output) = NULL;
@@ -86,7 +99,9 @@ fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output)
 // ++ Fonts ++
 
 fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font) {
-  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts, font_name, strlen(font_name));
+  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
+                                                  font_name,
+                                                  strlen(font_name));
   if (font == NULL) {
     if (hashmap_put(&loaded_fonts, font_name, strlen(font_name), precreated_font) != 0) {
       return ERR_RM;
@@ -112,7 +127,9 @@ fn err_code rm_create_font(const char *font_name, const char *file_path, u32 fon
 }
 
 fn err_code rm_delete_font(const char *font_name) {
-  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts, font_name, strlen(font_name));
+  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
+                                                  font_name,
+                                                  strlen(font_name));
 
   if (font == NULL) {
     return ERR_RM_NOT_FOUND;
@@ -126,7 +143,10 @@ fn err_code rm_delete_font(const char *font_name) {
 }
 
 fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
-  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts, font_name, strlen(font_name));
+  ALLEGRO_FONT* font =
+        (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
+                                    font_name,
+                                    strlen(font_name));
   
   if (font == NULL) {
     (*font_output) = NULL;
@@ -138,3 +158,70 @@ fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
 }
 
 // -- Fonts --
+// ++ Audio Streams ++
+err_code rm_insert_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM *precreated_stream) {
+  ALLEGRO_AUDIO_STREAM* stream =
+      (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,
+                                        stream_name,
+                                        strlen(stream_name));
+  if (stream == NULL) {
+    if (hashmap_put(&loaded_audio_streams, stream_name,
+                    strlen(stream_name), precreated_stream) != 0) {
+      return ERR_RM;
+    }
+    return ERR_OKAY;
+  } else {
+    return ERR_RM_RESOURCE_EXISTS;
+  }
+}
+
+fn err_code rm_create_audio_stream(const char *stream_name, const char *file_path) {
+  // TODO(kay): The buffer_count and sample_count are set to these values,
+  // make sure they work for every file
+  ALLEGRO_AUDIO_STREAM *audio_stream
+              = al_load_audio_stream(file_path, 8, 512);
+  if (audio_stream == NULL) {
+    return ERR_RM_LOADING_RESOURCES;
+  }
+  
+  err_code status = rm_insert_audio_stream(stream_name, audio_stream);
+  if (status != ERR_OKAY) {
+    al_destroy_audio_stream(audio_stream);
+  }
+  
+  return status;
+}
+
+fn err_code rm_delete_audio_stream(const char *stream_name) {
+  ALLEGRO_AUDIO_STREAM* stream =
+              (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,
+                                                 stream_name,
+                                                 strlen(stream_name));
+
+  if (stream == NULL) {
+    return ERR_RM_NOT_FOUND;
+  } else {
+    if (hashmap_remove(&loaded_audio_streams, stream_name, strlen(stream_name) != 0)) {
+      return ERR_RM;
+    }
+    al_destroy_audio_stream(stream);
+    return ERR_OKAY;
+  }
+}
+
+fn err_code rm_get_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM **audio_stream_output) {
+  ALLEGRO_AUDIO_STREAM *stream =
+        (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,
+                                           stream_name,
+                                           strlen(stream_name));
+  
+  if (stream == NULL) {
+    (*audio_stream_output) = NULL;
+    return ERR_RM_NOT_FOUND;
+  } else {
+    (*audio_stream_output) = stream;
+    return ERR_OKAY;
+  }
+}
+
+// -- Audio Streams --

@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   
   ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
   ASSERT_ERR(rm_create_font("mw_16", "resources/Merriweather.ttf", 16));
-  ASSERT_ERR(rm_delete_font("mw_16"));
+  // ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_flags(ALLEGRO_RESIZABLE | ALLEGRO_OPENGL_3_0);
   ALLEGRO_DISPLAY *display = al_create_display(1280, 720);
@@ -68,13 +68,17 @@ int main(int argc, char **argv) {
   ALLEGRO_MIXER *mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
   assert(mixer && voice);
   
-  ALLEGRO_AUDIO_STREAM *song = al_load_audio_stream("./resources/weird-fishes.flac", 16, 256);
-  assert(song != NULL);
+  ASSERT_ERR(rm_create_audio_stream("fishes", "./resources/weird-fishes.flac"));
+  // ALLEGRO_AUDIO_STREAM *song = al_load_audio_stream("./resources/weird-fishes.flac", 8, 512);
+  // assert(song != NULL);
   
-  al_attach_audio_stream_to_mixer(song, mixer);
+  ALLEGRO_AUDIO_STREAM *fishes;
+  ASSERT_ERR(rm_get_audio_stream("fishes", &fishes));
+  al_attach_audio_stream_to_mixer(fishes, mixer);
+
   al_attach_mixer_to_voice(mixer, voice);
 
-  al_set_audio_stream_playing(song, true);
+  al_set_audio_stream_playing(fishes, true);
   
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_display_event_source(display));
@@ -116,8 +120,8 @@ int main(int argc, char **argv) {
   
   al_destroy_display(display);
   al_destroy_event_queue(event_queue);
-  al_detach_audio_stream(song);
-  al_destroy_audio_stream(song);
+  al_detach_audio_stream(fishes);
+  al_destroy_audio_stream(fishes);
   al_destroy_voice(voice);
   al_destroy_mixer(mixer);
   
