@@ -48,6 +48,9 @@ int main(int argc, char **argv) {
   ASSERT_ERR(rm_create_font("mw_16", "resources/Merriweather.ttf", 16));
   // ASSERT_ERR(rm_delete_font("mw_16"));
   
+  al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+  al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+  
   al_set_new_display_flags(ALLEGRO_RESIZABLE | ALLEGRO_OPENGL_3_0);
   ALLEGRO_DISPLAY *display = al_create_display(1280, 720);
   
@@ -64,8 +67,8 @@ int main(int argc, char **argv) {
   }
   
   // al_reserve_samples(4);
-  ALLEGRO_VOICE *voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
-  ALLEGRO_MIXER *mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
+  ALLEGRO_VOICE *voice = al_create_voice(48000, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+  ALLEGRO_MIXER *mixer = al_create_mixer(48000, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
   assert(mixer && voice);
   
   ASSERT_ERR(rm_create_audio_stream("fishes", "./resources/weird-fishes.flac"));
