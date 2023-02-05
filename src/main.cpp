@@ -9,14 +9,18 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_native_dialog.h>
 
 #include "resource_manager.h"
+#include "audio_manager.h"
+
+#include "player.h"
 
 #include "p/p.h"
 #include "p/pv.h"
 #include "p/parr.h"
 
-private bool (*allegro_to_init[])(void) = {
+p_private bool (*allegro_to_init[])(void) = {
   al_init_image_addon,
   al_init_font_addon,
   al_init_ttf_addon,
@@ -24,13 +28,13 @@ private bool (*allegro_to_init[])(void) = {
   al_init_primitives_addon
 };
 
-private fn void init_allegro(void) {
+p_private p_fn void init_allegro(void) {
   if (al_init() == false) {
     fprintf(stderr, "Error initalizing allegro-5 (Error in al_init).\n");
     exit(-1);
   }
   
-  for (u32 i = 0; i < sizeof_array(allegro_to_init); i++) {
+  for (u32 i = 0; i < p_sizeof_array(allegro_to_init); i++) {
     if (allegro_to_init[i]() == false) {
       fprintf(stderr, "Error initalizing allegro-5 (Failed at index %d).\n", i);
       exit(-1);
@@ -41,11 +45,18 @@ private fn void init_allegro(void) {
 int main(int argc, char **argv) {
   init_allegro();
   printf("[DEBUG] Allegro inited.\n");
-  ASSERT_ERR(rm_init());
+  p_ASSERT_ERR(rm_init());
   printf("[DEBUG] Resource Manager inited.\n");
   
-  ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
-  ASSERT_ERR(rm_create_font("mw_16", "resources/Merriweather.ttf", 16));
+  if (al_install_audio() == false) {
+    fprintf(stderr, "Failed to install allegro audio.");
+  }
+  
+  p_ASSERT_ERR(audio_manager_init());
+  printf("[DEBUG] Audio Manager inited.\n");
+  
+  p_ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
+  p_ASSERT_ERR(rm_create_font("mw_32", "resources/Merriweather.ttf", 32));
   // ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
@@ -54,34 +65,28 @@ int main(int argc, char **argv) {
   al_set_new_display_flags(ALLEGRO_RESIZABLE | ALLEGRO_OPENGL_3_0);
   ALLEGRO_DISPLAY *display = al_create_display(1280, 720);
   
+  // al_show_native_message_box(display, "ERROR", "hi", "Experienced an error!", 0, 0);
+  
   al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
   
   ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
   assert(event_queue != NULL);
   
+  Player player = player_new();
+  
   if (al_install_keyboard() == false) {
     fprintf(stderr, "Failed to install allegro keyboard. Maybe keyboard is not connected?");
   }
-  if (al_install_audio() == false) {
-    fprintf(stderr, "Failed to install allegro audio.");
-  }
   
-  // al_reserve_samples(4);
-  ALLEGRO_VOICE *voice = al_create_voice(48000, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
-  ALLEGRO_MIXER *mixer = al_create_mixer(48000, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
-  assert(mixer && voice);
-  
-  ASSERT_ERR(rm_create_audio_stream("fishes", "./resources/weird-fishes.flac"));
-  // ALLEGRO_AUDIO_STREAM *song = al_load_audio_stream("./resources/weird-fishes.flac", 8, 512);
-  // assert(song != NULL);
-  
-  ALLEGRO_AUDIO_STREAM *fishes;
-  ASSERT_ERR(rm_get_audio_stream("fishes", &fishes));
-  al_attach_audio_stream_to_mixer(fishes, mixer);
+  MusicParams params;
+  audio_manager_get_music_params(MusicFiles[WEIRD_FISHES], &params);
+  params.pan = 0.f;
+  params.speed = 1.f;
+  params.gain = 1.f;
+  params.play_mode = ALLEGRO_PLAYMODE_LOOP;
+  audio_manager_set_music_params(MusicFiles[WEIRD_FISHES], params);
 
-  al_attach_mixer_to_voice(mixer, voice);
-
-  al_set_audio_stream_playing(fishes, true);
+  audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStatePlaying);
   
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_display_event_source(display));
@@ -91,19 +96,30 @@ int main(int argc, char **argv) {
   al_start_timer(frame_timer);
   
   bool running = true;
+  double last_frame = al_get_time();
+
   while (running) {
     ALLEGRO_EVENT event;
     al_wait_for_event(event_queue, &event);
 
     switch (event.type) {
       case (ALLEGRO_EVENT_TIMER): {
+        double frame_now = al_get_time();
+        double delta_time = frame_now - last_frame;
+        
+        ALLEGRO_KEYBOARD_STATE state;
+        al_get_keyboard_state(&state);
+        player_handle_input(&player, delta_time, &state);
+
         al_clear_to_color(al_map_rgba(24, 0, 16, 0));
         ALLEGRO_BITMAP *heart;
-        ASSERT_ERR(rm_get_image("heart", &heart));
+        p_ASSERT_ERR(rm_get_image("heart", &heart));
 
-        ALLEGRO_FONT *mw_16;
-        ASSERT_ERR(rm_get_font("mw_16", &mw_16));
-        al_draw_text(mw_16, al_map_rgb(255, 255, 255), 50, 300, 0, "Hello, World!");
+        player_render(&player);
+
+        ALLEGRO_FONT *mw_32;
+        p_ASSERT_ERR(rm_get_font("mw_32", &mw_32));
+        al_draw_text(mw_32, al_map_rgb(255, 255, 255), 50, 300, 0, "Heeeeyyyyy, World!");
 
         al_draw_bitmap(heart, 24, 24, 0);
         al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
@@ -111,9 +127,16 @@ int main(int argc, char **argv) {
         al_draw_filled_circle(600, 600, 200, al_map_rgb(255, 0, 255));
         
         al_flip_display();
+
+        last_frame = frame_now;
       } break;
       case (ALLEGRO_EVENT_DISPLAY_CLOSE): {
         running = false;
+      } break;
+      case (ALLEGRO_EVENT_KEY_UP): {
+        if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+          audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStateToggle);
+        }
       } break;
       case (ALLEGRO_EVENT_DISPLAY_RESIZE): {
         al_acknowledge_resize(display);
@@ -123,10 +146,8 @@ int main(int argc, char **argv) {
   
   al_destroy_display(display);
   al_destroy_event_queue(event_queue);
-  al_detach_audio_stream(fishes);
-  al_destroy_audio_stream(fishes);
-  al_destroy_voice(voice);
-  al_destroy_mixer(mixer);
+  
+  audio_manager_shutdown();
   
   return 0;
 }

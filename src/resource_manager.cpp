@@ -21,7 +21,7 @@ struct hashmap_s loaded_fonts;
 #define AUDIO_STREAM_INITIAL_SIZE 16
 struct hashmap_s loaded_audio_streams;
 
-fn err_code rm_init(void) {
+p_fn err_code rm_init(void) {
   if (hashmap_create(IMAGES_INITIAL_SIZE, &loaded_images) != 0) {
     return ERR_NOKAY;
   }
@@ -36,7 +36,7 @@ fn err_code rm_init(void) {
 
 // ++ Images ++
 
-fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap) {
+p_fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap) {
   ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
                                                        image_name,
                                                        strlen(image_name));
@@ -51,7 +51,7 @@ fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_b
   }
 }
 
-fn err_code rm_create_image(const char *image_name, const char *file_path) {
+p_fn err_code rm_create_image(const char *image_name, const char *file_path) {
   ALLEGRO_BITMAP *bitmap = al_load_bitmap(file_path);
   if (!bitmap) {
     return ERR_RM_LOADING_RESOURCES;
@@ -65,7 +65,7 @@ fn err_code rm_create_image(const char *image_name, const char *file_path) {
   return result;
 }
 
-fn err_code rm_delete_image(const char *image_name) {
+p_fn err_code rm_delete_image(const char *image_name) {
   ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
                                                       image_name,
                                                       strlen(image_name));
@@ -81,7 +81,7 @@ fn err_code rm_delete_image(const char *image_name) {
   }
 }
 
-fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output) {
+p_fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output) {
   ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
                                                       image_name,
                                                       strlen(image_name));
@@ -98,7 +98,7 @@ fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_output)
 // -- Images --
 // ++ Fonts ++
 
-fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font) {
+p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font) {
   ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
                                                   font_name,
                                                   strlen(font_name));
@@ -112,7 +112,7 @@ fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font)
   }
 }
 
-fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size) {
+p_fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size) {
   ALLEGRO_FONT *font = al_load_ttf_font(file_path, (int)font_size, 0);
   if (!font) {
     return ERR_RM_LOADING_RESOURCES;
@@ -126,7 +126,7 @@ fn err_code rm_create_font(const char *font_name, const char *file_path, u32 fon
   return result;
 }
 
-fn err_code rm_delete_font(const char *font_name) {
+p_fn err_code rm_delete_font(const char *font_name) {
   ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
                                                   font_name,
                                                   strlen(font_name));
@@ -142,7 +142,7 @@ fn err_code rm_delete_font(const char *font_name) {
   }
 }
 
-fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
+p_fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
   ALLEGRO_FONT* font =
         (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
                                     font_name,
@@ -175,7 +175,7 @@ err_code rm_insert_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM *p
   }
 }
 
-fn err_code rm_create_audio_stream(const char *stream_name, const char *file_path) {
+p_fn err_code rm_create_audio_stream(const char *stream_name, const char *file_path) {
   // TODO(kay): The buffer_count and sample_count are set to these values,
   // make sure they work for every file
   ALLEGRO_AUDIO_STREAM *audio_stream
@@ -192,7 +192,7 @@ fn err_code rm_create_audio_stream(const char *stream_name, const char *file_pat
   return status;
 }
 
-fn err_code rm_delete_audio_stream(const char *stream_name) {
+p_fn err_code rm_delete_audio_stream(const char *stream_name) {
   ALLEGRO_AUDIO_STREAM* stream =
               (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,
                                                  stream_name,
@@ -209,7 +209,7 @@ fn err_code rm_delete_audio_stream(const char *stream_name) {
   }
 }
 
-fn err_code rm_get_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM **audio_stream_output) {
+p_fn err_code rm_get_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM **audio_stream_output) {
   ALLEGRO_AUDIO_STREAM *stream =
         (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,
                                            stream_name,
