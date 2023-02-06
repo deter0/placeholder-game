@@ -5,6 +5,7 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/bitmap.h>
 #include <allegro5/allegro_primitives.h>
+#include <math.h>
 
 #include "p/p.h"
 #include "audio_manager.h"
@@ -12,6 +13,9 @@
 
 #include "tile_renderer.h"
 
+// TODO(kay): Create `map_renderer_bitmap` with the TileMap struct and calculate the width and the height or get it as a parameter e.g. CreateMap(TilesX, TilesY, TilesSize, ...)
+// TODO(kay): Restructure map data to be a continous buffer that is allocated when created, rewrite renderer
+// TODO(kay): Reading and writing map data from a file
 p_private const u32 map_renderer_res_x = 640, map_renderer_res_y = 640;
 p_private ALLEGRO_BITMAP *map_renderer_bitmap;
 
@@ -68,13 +72,31 @@ p_fn err_code tr_tile_map_cam_input(TileMap *map, ALLEGRO_KEYBOARD_STATE *state,
   }
   if (al_key_down(state, ALLEGRO_KEY_SPACE)) {
     map->camera_position.z += 900.f * delta_time;
+    map->camera_position -= glm::vec3(450.f * delta_time, 450.f * delta_time, 0.f);
   }
   if (al_key_down(state, ALLEGRO_KEY_C)) {
     map->camera_position.z -= 900.f * delta_time;
+    map->camera_position -= glm::vec3(450.f * delta_time, 450.f * delta_time, 0.f);
   }
 }
 
-p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, bool debug) {
+p_private inline p_fn float round_to_m(float n, float mult) {
+  return floorf((n + mult / 2.0f) / mult) * mult;
+}
+
+p_private inline p_fn float round_to_dp(float n, int num_decimal_places) {
+  float mult = pow((float)10, (float)num_decimal_places);
+  return floorf(n * mult + 0.5f) / mult;
+}
+p_private inline p_fn float map_range_f(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+p_private inline p_fn float lerp_f(float a, float b, float t) {
+  return a + (b - a) * t;
+}
+
+p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, ALLEGRO_DISPLAY *display, bool debug, float mouse_x, float mouse_y) {
   ALLEGRO_BITMAP *texture_atlas = NULL;
   err_code status = rm_get_image(map->identifier, &texture_atlas);
   if (status != ERR_OKAY) {
@@ -83,19 +105,19 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, bo
     return ERR_TR;
   }
   
+  u32 map_width = 5;
+  u32 texture_size = map->texture_size;
+  
   al_set_target_bitmap(map_renderer_bitmap);
+  al_clear_to_color(al_map_rgba(0.f, 0.f, 0.f, 0.f));
   al_hold_bitmap_drawing(true);
   
-  u32 map_width = 5;
-  bool stop = false;
-  
-  u32 texture_size = map->texture_size;
   if (debug) {
     for (uint x = 0; x < map_renderer_res_x; x += texture_size) {
       al_draw_line(
         x, 0,
         x, map_renderer_res_y,
-        al_map_rgb(255, 0, 255),
+        al_map_rgba_f(1.0f, 0, 1.0f, 0.45f),
         1.5f
       );
     }
@@ -103,12 +125,13 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, bo
       al_draw_line(
         0, y,
         map_renderer_res_x, y,
-        al_map_rgb(255, 0, 255),
+        al_map_rgba_f(1.f, 0.f, 1.f, 0.45f),
         1.5f
       );
     }
   }
   
+  bool stop = false;
   for (u32 n = 0; stop == false; n++) {
     int index = n;
     int tile_data = map->map_data[n];
@@ -142,15 +165,29 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, bo
     }
   }
 
+  float dx = -map->camera_position.x;
+  float dy = -map->camera_position.y;
+  float dsx = map_renderer_res_x + map->camera_position.z;
+  float dsy = map_renderer_res_y + map->camera_position.z;
+  
+  float selection_x = round_to_m((((mouse_x - texture_size/2.f) - dx) / dsx) * map_renderer_res_x, texture_size);
+  float selection_y = round_to_m((((mouse_y - texture_size/2.f) - dy) / dsy) * map_renderer_res_y, texture_size);
+
+  al_draw_rectangle(selection_x, selection_y, selection_x+texture_size, selection_y+texture_size, al_map_rgba(0, 255, 0, 155), 2.5f);
+
   al_hold_bitmap_drawing(false);
   al_set_target_bitmap(output_bitmap);
   
   al_draw_scaled_bitmap(map_renderer_bitmap, 0, 0,
                         map_renderer_res_x,
                         map_renderer_res_y,
-                        -map->camera_position.x,
-                        -map->camera_position.y,
-                        map_renderer_res_x * 3 + map->camera_position.z,
-                        map_renderer_res_y * 3 + map->camera_position.z,
+                        dx, dy,
+                        dsx, dsy,
                         0);
+                        
+  al_draw_filled_circle(dx,         dy, 4, al_map_rgb(139, 0, 135));
+  al_draw_filled_circle(dx+dsx,     dy, 4, al_map_rgb(139, 0, 135));
+  al_draw_filled_circle(dx,     dy+dsy, 4, al_map_rgb(139, 0, 135));
+  al_draw_filled_circle(dx+dsx, dy+dsy, 4, al_map_rgb(139, 0, 135));
+  al_draw_rectangle(dx, dy, dx+dsx, dy+dsy, al_map_rgb(139, 0, 135), 1.f);
 }

@@ -11,6 +11,8 @@
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_native_dialog.h>
 
+#include <pthread.h>
+
 #include "resource_manager.h"
 #include "audio_manager.h"
 #include "tile_renderer.h"
@@ -51,6 +53,7 @@ int main(int argc, char **argv) {
   p_ASSERT_ERR(tr_init());
   printf("[DEBUG] Tile Renderer inited.\n");
   
+  al_set_app_name("Gayme");
   if (al_install_audio() == false) {
     fprintf(stderr, "Failed to install allegro audio.");
   }
@@ -70,7 +73,7 @@ int main(int argc, char **argv) {
   
   // al_show_native_message_box(display, "ERROR", "hi", "Experienced an error!", 0, 0);
   
-  al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
+  al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
   
   ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
   assert(event_queue != NULL);
@@ -89,7 +92,7 @@ int main(int argc, char **argv) {
   params.play_mode = ALLEGRO_PLAYMODE_LOOP;
   audio_manager_set_music_params(MusicFiles[WEIRD_FISHES], params);
 
-  audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStatePlaying);
+  // audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStatePlaying);
   
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_display_event_source(display));
@@ -122,28 +125,36 @@ int main(int argc, char **argv) {
       case (ALLEGRO_EVENT_TIMER): {
         double frame_now = al_get_time();
         double delta_time = frame_now - last_frame;
+        printf("%f\n", 1.f/delta_time);
         
         ALLEGRO_KEYBOARD_STATE state;
         al_get_keyboard_state(&state);
         player_handle_input(&player, delta_time, &state);
 
         al_clear_to_color(al_map_rgba(24, 0, 16, 0));
-        // ALLEGRO_BITMAP *heart;
-        // p_ASSERT_ERR(rm_get_image("heart", &heart));
-
-        // player_render(&player);
         
-        // ALLEGRO_FONT *mw_32;
-        // p_ASSERT_ERR(rm_get_font("mw_32", &mw_32));
-        // al_draw_text(mw_32, al_map_rgb(255, 255, 255), 50, 300, 0, "Heeeeyyyyy, World!");
-
-        // al_draw_bitmap(heart, 24, 24, 0);
-        // al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
+        float gmouse_x = 0, gmouse_y = 0;
+        float win_x = 0, win_y = 0;
+        {
+          int wxi = 0, wyi = 0;
+          al_get_window_position(display, &wxi, &wyi);
+          int mxi = 0, myi = 0;
+          al_get_mouse_cursor_position(&mxi, &myi);
+          
+          gmouse_x = mxi;
+          gmouse_y = myi;
+          win_x = wxi;
+          win_y = wyi;
+        }
         
-        // al_draw_filled_circle(600, 600, 200, al_map_rgb(255, 0, 255));
+        float desktop_width = 1920;
+        float desktop_height = 1080;
+        
+        float mouse_x = gmouse_x - win_x;
+        float mouse_y = gmouse_y - win_y;
         
         tr_tile_map_cam_input(tile_map_a, &state, delta_time);
-        tr_tile_map_render(tile_map_a, al_get_backbuffer(display), true);
+        tr_tile_map_render(tile_map_a, al_get_backbuffer(display), display, true, mouse_x, mouse_y);
         
         al_flip_display();
 
@@ -163,10 +174,15 @@ int main(int argc, char **argv) {
     }
   }
   
+  printf("Exiting.\n");
+  
   al_destroy_display(display);
   al_destroy_event_queue(event_queue);
   
   audio_manager_shutdown();
   
-  return 0;
+  al_uninstall_system();
+  printf("[GOODBYE] Okay!\n");
+
+  exit(0);
 }

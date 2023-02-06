@@ -101,6 +101,17 @@ p_fn err_code audio_manager_get_music_params(const char *rm_music_name, MusicPar
 p_fn err_code audio_manager_shutdown(void) {
   if (disable_audio)
     return ERR_OKAY;
+    
+  for (u32 i = 0; i < p_sizeof_array(MusicFiles); i++) {
+    ALLEGRO_AUDIO_STREAM *music;
+    err_code status = rm_get_audio_stream(MusicFiles[i], &music);
+    if (status != ERR_OKAY) {
+      fprintf(stderr, "[ERROR] Error (0x%X) getting music file: `%s`\n", status, MusicFiles[i]);
+    }
+    
+    al_set_audio_stream_playing(music, false);
+    al_detach_audio_stream(music);
+  }
 
   al_destroy_mixer(mixer);
   al_destroy_voice(voice);

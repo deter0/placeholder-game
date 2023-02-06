@@ -25,6 +25,7 @@ p_fn err_code tr_new_tile_map(int *map_data, const char *map_identifier,
                            const char *texture_atlas_path, u32 texture_size,
                            u32 texture_atlas_row_count, TileMap **output_map);
 
-p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, bool debug);
+p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, ALLEGRO_DISPLAY *display,
+                                 bool debug, float mouse_x, float mouse_y);
 
 p_fn err_code tr_tile_map_cam_input(TileMap *map, ALLEGRO_KEYBOARD_STATE *state, double delta_time);
