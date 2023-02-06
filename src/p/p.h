@@ -34,6 +34,10 @@ typedef enum err_code {
   // Audio Manager, series (0xAC0)
   ERR_AM                 = 0xAC0, // - Generic Error
   ERR_AM_AUDIO_NOT_FOUND = 0xAC1, // - Audio not found in `MusicFiles` or `SoundEffectFiles` arrays
+  
+  // Tile Renderer, series (0xAD0)
+  ERR_TR                = 0xAD0, // - Generic Error
+  ERR_TR_ALLOC_MAP      = 0xAD1, // - Error allocating memory for tile map (includes atlas)
 } err_code;
 
 #define p_ASSERT_ERR(err) if (err != ERR_OKAY) {\

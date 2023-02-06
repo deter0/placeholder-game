@@ -13,6 +13,7 @@
 
 #include "resource_manager.h"
 #include "audio_manager.h"
+#include "tile_renderer.h"
 
 #include "player.h"
 
@@ -47,6 +48,8 @@ int main(int argc, char **argv) {
   printf("[DEBUG] Allegro inited.\n");
   p_ASSERT_ERR(rm_init());
   printf("[DEBUG] Resource Manager inited.\n");
+  p_ASSERT_ERR(tr_init());
+  printf("[DEBUG] Tile Renderer inited.\n");
   
   if (al_install_audio() == false) {
     fprintf(stderr, "Failed to install allegro audio.");
@@ -95,6 +98,19 @@ int main(int argc, char **argv) {
   al_register_event_source(event_queue, al_get_timer_event_source(frame_timer));
   al_start_timer(frame_timer);
   
+  int g = -1;
+  int TemplateMapData[] = {
+    g,    g,    g,    g,    g,
+    g,    g,    g,    g,    g,
+    g,    185,  40,   465,  g,
+    g,    345,  425,  445,  g,
+    g,    g,    g,    g,    g, -9999
+  };
+
+  TileMap *tile_map_a;
+  p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
+  
+  ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;
   double last_frame = al_get_time();
 
@@ -112,19 +128,22 @@ int main(int argc, char **argv) {
         player_handle_input(&player, delta_time, &state);
 
         al_clear_to_color(al_map_rgba(24, 0, 16, 0));
-        ALLEGRO_BITMAP *heart;
-        p_ASSERT_ERR(rm_get_image("heart", &heart));
+        // ALLEGRO_BITMAP *heart;
+        // p_ASSERT_ERR(rm_get_image("heart", &heart));
 
-        player_render(&player);
-
-        ALLEGRO_FONT *mw_32;
-        p_ASSERT_ERR(rm_get_font("mw_32", &mw_32));
-        al_draw_text(mw_32, al_map_rgb(255, 255, 255), 50, 300, 0, "Heeeeyyyyy, World!");
-
-        al_draw_bitmap(heart, 24, 24, 0);
-        al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
+        // player_render(&player);
         
-        al_draw_filled_circle(600, 600, 200, al_map_rgb(255, 0, 255));
+        // ALLEGRO_FONT *mw_32;
+        // p_ASSERT_ERR(rm_get_font("mw_32", &mw_32));
+        // al_draw_text(mw_32, al_map_rgb(255, 255, 255), 50, 300, 0, "Heeeeyyyyy, World!");
+
+        // al_draw_bitmap(heart, 24, 24, 0);
+        // al_draw_line(250, 250,  1125, 525, al_map_rgba(255, 15, 16, 255), 2.5f);
+        
+        // al_draw_filled_circle(600, 600, 200, al_map_rgb(255, 0, 255));
+        
+        tr_tile_map_cam_input(tile_map_a, &state, delta_time);
+        tr_tile_map_render(tile_map_a, al_get_backbuffer(display), true);
         
         al_flip_display();
 
@@ -134,9 +153,9 @@ int main(int argc, char **argv) {
         running = false;
       } break;
       case (ALLEGRO_EVENT_KEY_UP): {
-        if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
-          audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStateToggle);
-        }
+        // if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+        //   audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStateToggle);
+        // }
       } break;
       case (ALLEGRO_EVENT_DISPLAY_RESIZE): {
         al_acknowledge_resize(display);
