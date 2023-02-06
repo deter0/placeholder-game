@@ -78,6 +78,8 @@ p_fn err_code tr_tile_map_cam_input(TileMap *map, ALLEGRO_KEYBOARD_STATE *state,
   if (al_key_down(state, ALLEGRO_KEY_C)) {
     map->camera_position.z -= 1200.f * delta_time;
   }
+  
+  return ERR_OKAY;
 }
 
 p_private inline p_fn float round_to_m(float n, float mult) {
@@ -207,4 +209,6 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, AL
   rm_get_font("mw_20", &mw_20);
   
   al_draw_textf(mw_20, al_map_rgba(255, 0, 255, 200), 12, 12, 0, "Selection: %d, %d", (int)selection_x/texture_size, (int)selection_y/texture_size);
+  
+  return ERR_OKAY;
 }

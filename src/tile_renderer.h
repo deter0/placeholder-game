@@ -11,7 +11,7 @@
 #include "audio_manager.h"
 #include "resource_manager.h"
 
-typedef struct TileMap {
+struct TileMap {
   const char *identifier;
   int *map_data;
   u32 texture_size;
