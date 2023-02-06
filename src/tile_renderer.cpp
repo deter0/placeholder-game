@@ -16,13 +16,15 @@
 // TODO(kay): Create `map_renderer_bitmap` with the TileMap struct and calculate the width and the height or get it as a parameter e.g. CreateMap(TilesX, TilesY, TilesSize, ...)
 // TODO(kay): Restructure map data to be a continous buffer that is allocated when created, rewrite renderer
 // TODO(kay): Reading and writing map data from a file
-p_private const u32 map_renderer_res_x = 640, map_renderer_res_y = 640;
+p_private const u32 map_renderer_res_x = 16*20, map_renderer_res_y = 16*28;
 p_private ALLEGRO_BITMAP *map_renderer_bitmap;
 
 p_fn err_code tr_init() {
   map_renderer_bitmap = al_create_bitmap(map_renderer_res_x, map_renderer_res_y);
   if (map_renderer_bitmap == NULL)
     return ERR_TR;
+
+  rm_create_font("mw_20", "resources/Merriweather.ttf", 20);
   
   return ERR_OKAY;
 }
@@ -71,12 +73,10 @@ p_fn err_code tr_tile_map_cam_input(TileMap *map, ALLEGRO_KEYBOARD_STATE *state,
     map->camera_position.y += 400.f * delta_time;
   }
   if (al_key_down(state, ALLEGRO_KEY_SPACE)) {
-    map->camera_position.z += 900.f * delta_time;
-    map->camera_position -= glm::vec3(450.f * delta_time, 450.f * delta_time, 0.f);
+    map->camera_position.z += 1200.f * delta_time;
   }
   if (al_key_down(state, ALLEGRO_KEY_C)) {
-    map->camera_position.z -= 900.f * delta_time;
-    map->camera_position -= glm::vec3(450.f * delta_time, 450.f * delta_time, 0.f);
+    map->camera_position.z -= 1200.f * delta_time;
   }
 }
 
@@ -172,6 +172,18 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, AL
   
   float selection_x = round_to_m((((mouse_x - texture_size/2.f) - dx) / dsx) * map_renderer_res_x, texture_size);
   float selection_y = round_to_m((((mouse_y - texture_size/2.f) - dy) / dsy) * map_renderer_res_y, texture_size);
+  if (selection_x > map_renderer_res_x - texture_size) {
+    selection_x = map_renderer_res_x - texture_size;
+  }
+  if (selection_x < 0) {
+    selection_x = 0;
+  }
+  if (selection_y > map_renderer_res_y - texture_size) {
+    selection_y = map_renderer_res_y - texture_size;
+  }
+  if (selection_y < 0) {
+    selection_y = 0;
+  }
 
   al_draw_rectangle(selection_x, selection_y, selection_x+texture_size, selection_y+texture_size, al_map_rgba(0, 255, 0, 155), 2.5f);
 
@@ -190,4 +202,9 @@ p_fn err_code tr_tile_map_render(TileMap *map, ALLEGRO_BITMAP *output_bitmap, AL
   al_draw_filled_circle(dx,     dy+dsy, 4, al_map_rgb(139, 0, 135));
   al_draw_filled_circle(dx+dsx, dy+dsy, 4, al_map_rgb(139, 0, 135));
   al_draw_rectangle(dx, dy, dx+dsx, dy+dsy, al_map_rgb(139, 0, 135), 1.f);
+  
+  ALLEGRO_FONT *mw_20;
+  rm_get_font("mw_20", &mw_20);
+  
+  al_draw_textf(mw_20, al_map_rgba(255, 0, 255, 200), 12, 12, 0, "Selection: %d, %d", (int)selection_x/texture_size, (int)selection_y/texture_size);
 }
