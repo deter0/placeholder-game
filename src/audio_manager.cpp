@@ -31,7 +31,7 @@ p_fn err_code audio_manager_init(void) {
   for (u32 i = 0; i < p_sizeof_array(MusicFiles); i++) {
     err_code status = rm_create_audio_stream(MusicFiles[i], MusicFiles[i]);
     if (status != ERR_OKAY) {
-      fprintf(stderr, "[ERROR] Error (0x%X) loading music file: `%s`\n", status, MusicFiles[i]);
+      fprintf(stderr, "[ERROR] (%s:%d) Error (0x%X) loading music file: `%s`\n", __FILE__, __LINE__, status, MusicFiles[i]);
     }
     
     ALLEGRO_AUDIO_STREAM *music;

@@ -17,10 +17,12 @@ p_private const char *SoundEffectsFiles[] = {
 };
 
 enum Music {
-  WEIRD_FISHES = 0
+  WEIRD_FISHES = 0,
+  BODYSNATCHERS
 };
 p_private const char *MusicFiles[] = {
-  [WEIRD_FISHES] = "./resources/weird-fishes.flac"
+  [WEIRD_FISHES] = "./resources/weird-fishes.flac",
+  [BODYSNATCHERS] = "./resources/bodysnatchers-8bit.ogg"
 };
 
 enum MusicPlayState {

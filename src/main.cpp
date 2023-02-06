@@ -62,7 +62,6 @@ int main(int argc, char **argv) {
   printf("[DEBUG] Audio Manager inited.\n");
   
   p_ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
-  p_ASSERT_ERR(rm_create_font("mw_32", "resources/Merriweather.ttf", 32));
   // ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
@@ -85,14 +84,13 @@ int main(int argc, char **argv) {
   }
   
   MusicParams params;
-  audio_manager_get_music_params(MusicFiles[WEIRD_FISHES], &params);
+  audio_manager_get_music_params(MusicFiles[BODYSNATCHERS], &params);
   params.pan = 0.f;
-  params.speed = 1.f;
-  params.gain = 1.f;
+  params.speed = 0.95f;
+  params.gain = 0.5f;
   params.play_mode = ALLEGRO_PLAYMODE_LOOP;
-  audio_manager_set_music_params(MusicFiles[WEIRD_FISHES], params);
-
-  // audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStatePlaying);
+  audio_manager_set_music_params(MusicFiles[BODYSNATCHERS], params);
+  audio_manager_set_play_state(MusicFiles[BODYSNATCHERS], PlayStatePlaying);
   
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_display_event_source(display));
