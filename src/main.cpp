@@ -99,17 +99,22 @@ int main(int argc, char **argv) {
   al_register_event_source(event_queue, al_get_timer_event_source(frame_timer));
   al_start_timer(frame_timer);
   
-  int g = -1;
-  int TemplateMapData[] = {
-    g,    g,    g,    g,    g,
-    g,    g,    g,    g,    g,
-    g,    185,  40,   465,  g,
-    g,    345,  425,  445,  g,
-    g,    g,    g,    g,    g, -9999
-  };
+  // int g = -1;
+  // int TemplateMapData[] = {
+  //   g,    g,    g,    g,    g,
+  //   g,    g,    g,    g,    g,
+  //   g,    185,  40,   465,  g,
+  //   g,    345,  425,  445,  g,
+  //   g,    g,    g,    g,    g, -9999
+  // };
 
   TileMap *tile_map_a;
-  p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
+  // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
+  p_ASSERT_ERR(tr_create_tile_map("map_a", 100, 100, 16, &tile_map_a));
+  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap("./resources/texture_atlas_sample.png");
+  assert(texture_atlas != NULL);
+  
+  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 16, 0));
   
   ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;
@@ -123,7 +128,7 @@ int main(int argc, char **argv) {
       case (ALLEGRO_EVENT_TIMER): {
         double frame_now = al_get_time();
         double delta_time = frame_now - last_frame;
-        printf("%f\n", 1.f/delta_time);
+        // printf("%f\n", 1.f/delta_time);
         
         ALLEGRO_KEYBOARD_STATE state;
         al_get_keyboard_state(&state);
@@ -152,7 +157,7 @@ int main(int argc, char **argv) {
         float mouse_y = gmouse_y - win_y;
         
         tr_tile_map_cam_input(tile_map_a, &state, delta_time);
-        tr_tile_map_render(tile_map_a, al_get_backbuffer(display), display, true, mouse_x, mouse_y);
+        tr_tile_map_render(tile_map_a, mouse_x, mouse_y, &state, true);
         
         al_flip_display();
 
