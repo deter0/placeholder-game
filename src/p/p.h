@@ -30,6 +30,7 @@ typedef enum err_code {
   ERR_RM_LOADING_RESOURCES = 0xAB2, // - Error loading in resource
   ERR_RM_NOT_FOUND         = 0xAB3, // - Getting or deleting resource that doesn't exist
   ERR_RM_RESOURCE_EXISTS   = 0xAB4, // - Creating a resource that already exists
+  ERR_RM_FAILED_DESTROY    = 0xAB5, // - Failed in exiting 
   
   // Audio Manager, series (0xAC0)
   ERR_AM                 = 0xAC0, // - Generic Error

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_image.h>
@@ -8,6 +9,7 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_audio.h>
 
+#include "resource_manager.h"
 #include "hashmap.h"
 
 #include "p/p.h"
@@ -34,7 +36,33 @@ p_fn err_code rm_init(void) {
   return ERR_OKAY;
 }
 
+p_fn err_code rm_shutdown(void) {
+  p_ASSERT_ERR(free_all_images());
+  p_ASSERT_ERR(free_all_fonts());
+  p_ASSERT_ERR(free_all_audio_streams());
+  
+  return ERR_OKAY;
+}
+
 // ++ Images ++
+
+p_private p_fn  int free_all_images_itr(void* const context, struct hashmap_element_s *element) {
+  printf("Freeing Image: %s\n", element->key);
+  
+  ALLEGRO_BITMAP *image = (ALLEGRO_BITMAP*)element->data;
+  al_destroy_bitmap(image);
+
+  return -1;
+}
+
+p_fn err_code free_all_images(void) {
+  if (hashmap_iterate_pairs(&loaded_images, free_all_images_itr, NULL) != 0) {
+    fprintf(stderr, "failed to deallocate hashmap entries?\n");
+    // return ERR_RM_FAILED_DESTROY;
+  }
+  hashmap_destroy(&loaded_images);
+  return ERR_OKAY;
+}
 
 p_fn err_code rm_insert_image(const char *image_name, ALLEGRO_BITMAP *precreated_bitmap) {
   ALLEGRO_BITMAP* image = (ALLEGRO_BITMAP*)hashmap_get(&loaded_images,
@@ -98,6 +126,24 @@ p_fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_outpu
 // -- Images --
 // ++ Fonts ++
 
+p_private p_fn int free_all_fonts_itr(void* const context, struct hashmap_element_s *element) {
+  printf("Freeing Font: %s\n", element->key);
+  
+  ALLEGRO_FONT *font = (ALLEGRO_FONT*)element->data;
+  al_destroy_font(font);
+
+  return -1;
+}
+
+p_fn err_code free_all_fonts(void) {
+  if (hashmap_iterate_pairs(&loaded_fonts, free_all_fonts_itr, NULL) != 0) {
+    fprintf(stderr, "failed to deallocate hashmap entries (Fonts)\n");
+    // return ERR_RM_FAILED_DESTROY;
+  }
+  hashmap_destroy(&loaded_fonts);
+  return ERR_OKAY;
+}
+
 p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font) {
   ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
                                                   font_name,
@@ -159,6 +205,26 @@ p_fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
 
 // -- Fonts --
 // ++ Audio Streams ++
+
+p_private p_fn int free_all_audio_streams_itr(void* const context, struct hashmap_element_s *element) {
+  printf("Freeing Audio Stream: %s\n", element->key);
+  
+  ALLEGRO_AUDIO_STREAM *as = (ALLEGRO_AUDIO_STREAM*)element->data;
+  al_destroy_audio_stream(as);
+
+  return -1;
+}
+
+p_fn err_code free_all_audio_streams(void) {
+  if (hashmap_iterate_pairs(&loaded_audio_streams, free_all_audio_streams_itr, NULL) != 0) {
+    fprintf(stderr, "failed to deallocate hashmap entries (Audio Streams)\n");
+    // return ERR_RM_FAILED_DESTROY;
+  }
+  hashmap_destroy(&loaded_audio_streams);
+  
+  return ERR_OKAY;
+}
+
 err_code rm_insert_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM *precreated_stream) {
   ALLEGRO_AUDIO_STREAM* stream =
       (ALLEGRO_AUDIO_STREAM*)hashmap_get(&loaded_audio_streams,

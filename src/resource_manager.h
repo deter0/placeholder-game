@@ -13,6 +13,11 @@
 #include "p/p.h"
 
 p_fn err_code rm_init(void);
+p_fn err_code rm_shutdown(void);
+
+p_fn err_code free_all_images(void);
+p_fn err_code free_all_fonts(void);
+p_fn err_code free_all_audio_streams(void);
 
 p_fn err_code rm_insert_image(const char *image_name,
                             ALLEGRO_BITMAP *precreated_bitmap);

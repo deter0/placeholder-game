@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
   TileMap *tile_map_a;
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
   p_ASSERT_ERR(tr_create_tile_map("map_a", 100, 100, 16, &tile_map_a));
+  tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
   ALLEGRO_BITMAP *texture_atlas = al_load_bitmap("./resources/texture_atlas_sample.png");
   assert(texture_atlas != NULL);
   
@@ -183,9 +184,12 @@ int main(int argc, char **argv) {
   al_destroy_event_queue(event_queue);
   
   audio_manager_shutdown();
+  rm_shutdown();
   
   al_uninstall_system();
   printf("[GOODBYE] Okay!\n");
 
-  exit(0);
+  do {
+    exit(0);
+  } while(1);
 }

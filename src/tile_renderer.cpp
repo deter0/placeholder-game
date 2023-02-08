@@ -23,6 +23,17 @@ p_fn err_code tr_init() {
   return ERR_OKAY;
 }
 
+p_fn err_code tr_save_tile_map_data_to_file(TileMap *tile_map, const char *file_name) {
+  FILE *tile_map_data_file = fopen(file_name, "wb");
+  
+  u32 file_size = tile_map->data.tiles_size;
+  fprintf(tile_map_data_file, "%d", file_size);
+
+  fclose(tile_map_data_file);
+  
+  return ERR_OKAY;
+}
+
 p_fn err_code tr_create_tile_map(const char *map_name, uint tiles_count_x, uint tiles_count_y, uint tile_size, TileMap **out) {
   TileMap *tile_map = (TileMap*)malloc(sizeof(TileMap));
   if (tile_map == NULL) {
