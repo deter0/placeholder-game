@@ -82,6 +82,9 @@ int main(int argc, char **argv) {
   if (al_install_keyboard() == false) {
     fprintf(stderr, "Failed to install allegro keyboard. Maybe keyboard is not connected?");
   }
+  if (al_install_mouse() == false) {
+    fprintf(stderr, "Failed to install allegro mouse. Maybe mouse is not connected?");
+  }
   
   MusicParams params;
   audio_manager_get_music_params(MusicFiles[BODYSNATCHERS], &params);
@@ -90,7 +93,7 @@ int main(int argc, char **argv) {
   params.gain = 0.5f;
   params.play_mode = ALLEGRO_PLAYMODE_LOOP;
   audio_manager_set_music_params(MusicFiles[BODYSNATCHERS], params);
-  audio_manager_set_play_state(MusicFiles[BODYSNATCHERS], PlayStatePlaying);
+  audio_manager_set_play_state(MusicFiles[BODYSNATCHERS], PlayStateStopped);
   
   al_register_event_source(event_queue, al_get_keyboard_event_source());
   al_register_event_source(event_queue, al_get_display_event_source(display));
@@ -110,12 +113,12 @@ int main(int argc, char **argv) {
 
   TileMap *tile_map_a;
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
-  p_ASSERT_ERR(tr_create_tile_map("map_a", 100, 100, 16, &tile_map_a));
+  p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 64, &tile_map_a));
   tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
-  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap("./resources/texture_atlas_sample.png");
+  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap("./resources/KAY.jpg");
   assert(texture_atlas != NULL);
   
-  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 16, 0));
+  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 128, 0));
   
   ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;

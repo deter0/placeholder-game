@@ -159,7 +159,7 @@ p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_fon
 }
 
 p_fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size) {
-  ALLEGRO_FONT *font = al_load_ttf_font(file_path, (int)font_size, 0);
+  ALLEGRO_FONT *font = al_load_ttf_font(file_path, (int)font_size, ALLEGRO_TTF_MONOCHROME);
   if (!font) {
     return ERR_RM_LOADING_RESOURCES;
   }
