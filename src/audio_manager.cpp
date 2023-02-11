@@ -7,6 +7,7 @@
 
 #include "resource_manager.h"
 #include "audio_manager.h"
+#include "p/ppath.h"
 
 p_private ALLEGRO_VOICE *voice;
 p_private ALLEGRO_MIXER *mixer;
@@ -29,7 +30,7 @@ p_fn err_code audio_manager_init(void) {
   al_set_default_voice(voice);
   
   for (u32 i = 0; i < p_sizeof_array(MusicFiles); i++) {
-    err_code status = rm_create_audio_stream(MusicFiles[i], MusicFiles[i]);
+    err_code status = rm_create_audio_stream(MusicFiles[i], get_resource_path(MusicFiles[i]));
     if (status != ERR_OKAY) {
       fprintf(stderr, "[ERROR] (%s:%d) Error (0x%X) loading music file: `%s`\n", __FILE__, __LINE__, status, MusicFiles[i]);
     }

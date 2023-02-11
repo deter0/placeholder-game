@@ -21,8 +21,8 @@ enum Music {
   BODYSNATCHERS
 };
 p_private const char *MusicFiles[] = {
-  [WEIRD_FISHES] = "./resources/weird-fishes.flac",
-  [BODYSNATCHERS] = "./resources/bodysnatchers-8bit.ogg"
+  [WEIRD_FISHES] = "weird-fishes.flac",
+  [BODYSNATCHERS] = "bodysnatchers-8bit.ogg"
 };
 
 enum MusicPlayState {

@@ -22,6 +22,7 @@
 #include "p/p.h"
 #include "p/pv.h"
 #include "p/parr.h"
+#include "p/ppath.h"
 
 p_private bool (*allegro_to_init[])(void) = {
   al_init_image_addon,
@@ -61,7 +62,7 @@ int main(int argc, char **argv) {
   p_ASSERT_ERR(audio_manager_init());
   printf("[DEBUG] Audio Manager inited.\n");
   
-  p_ASSERT_ERR(rm_create_image("heart", "resources/heart.png"));
+  p_ASSERT_ERR(rm_create_image("heart", RESOURCE_PATH(heart.png)));
   // ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
@@ -113,12 +114,12 @@ int main(int argc, char **argv) {
 
   TileMap *tile_map_a;
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
-  p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 64, &tile_map_a));
+  p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 16, &tile_map_a));
   tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
-  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap("./resources/KAY.jpg");
+  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(basictiles.png));
   assert(texture_atlas != NULL);
   
-  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 128, 0));
+  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 16, 0));
   
   ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;

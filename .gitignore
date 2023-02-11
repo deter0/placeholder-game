@@ -1,3 +1,5 @@
 .vscode/
 game
 include/glm/
+build/
+map-data.bin

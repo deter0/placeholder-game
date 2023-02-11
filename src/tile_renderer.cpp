@@ -12,6 +12,7 @@
 #include "resource_manager.h"
 
 #include "tile_renderer.h"
+#include "p/ppath.h"
 
 // TODO(kay): Create `map_renderer_bitmap` with the TileMap struct and calculate the width and the height or get it as a parameter e.g. CreateMap(TilesX, TilesY, TilesSize, ...)
 // TODO(kay): Restructure map data to be a continous buffer that is allocated when created, rewrite renderer
@@ -20,7 +21,7 @@
 p_private u32 currently_drawing = 0;
 
 p_fn err_code tr_init() {
-  p_ASSERT_ERR(rm_create_font("mw_20", "resources/Merriweather.ttf", 20));
+  p_ASSERT_ERR(rm_create_font("mw_20", RESOURCE_PATH(Merriweather.ttf), 20));
   
   return ERR_OKAY;
 }

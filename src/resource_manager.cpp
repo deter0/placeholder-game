@@ -159,6 +159,7 @@ p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_fon
 }
 
 p_fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size) {
+  printf("Loading Font: %s\n", file_path);
   ALLEGRO_FONT *font = al_load_ttf_font(file_path, (int)font_size, ALLEGRO_TTF_MONOCHROME);
   if (!font) {
     return ERR_RM_LOADING_RESOURCES;
@@ -244,6 +245,7 @@ err_code rm_insert_audio_stream(const char *stream_name, ALLEGRO_AUDIO_STREAM *p
 p_fn err_code rm_create_audio_stream(const char *stream_name, const char *file_path) {
   // TODO(kay): The buffer_count and sample_count are set to these values,
   // make sure they work for every file
+  printf("%s\n", file_path);
   ALLEGRO_AUDIO_STREAM *audio_stream
               = al_load_audio_stream(file_path, 8, 512);
   if (audio_stream == NULL) {
