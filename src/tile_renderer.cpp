@@ -295,7 +295,7 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
 
       al_hold_bitmap_drawing(true);
       uint total = 0;
-      for (int n = 0; n < map->atlas.total; n++) {
+      for (uint n = 0; n < map->atlas.total; n++) {
         u32 tex_coord_x = (n % map->atlas.row_count) * map->atlas.texture_size;
         u32 tex_coord_y = (n / map->atlas.row_count) * map->atlas.texture_size;
         

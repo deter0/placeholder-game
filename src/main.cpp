@@ -155,9 +155,6 @@ int main(int argc, char **argv) {
           win_y = wyi;
         }
         
-        float desktop_width = 1920;
-        float desktop_height = 1080;
-        
         float mouse_x = gmouse_x - win_x;
         float mouse_y = gmouse_y - win_y;
         
