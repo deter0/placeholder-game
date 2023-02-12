@@ -19,9 +19,17 @@ struct TextureAtlas {
   u32 total;
 };
 
+struct TileMapDataLayer {
+  i32 layer_index;
+  i32 *layer_tiles_data;
+  i32 layer_tiles_count;
+};
+
+#define MAX_LAYER_POINTERS 32
 struct TileMapData {
-  i32 *tiles;
-  u32  tiles_size;
+  TileMapDataLayer *layers[MAX_LAYER_POINTERS];
+  u32 layers_count;
+  u32 debug_layer_index;
 };
 
 struct TileMap {

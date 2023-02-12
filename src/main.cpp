@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
   p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 16, &tile_map_a));
   tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
-  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(basictiles.png));
+  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(asset.png));
   assert(texture_atlas != NULL);
   
-  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 16, 0));
+  p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 12, 0));
   
   ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;

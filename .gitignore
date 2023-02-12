@@ -2,4 +2,5 @@
 game
 include/glm/
 build/
+builddir/
 map-data.bin

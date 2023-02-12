@@ -27,14 +27,34 @@ p_fn err_code tr_init() {
 }
 
 p_fn err_code tr_save_tile_map_data_to_file(TileMap *tile_map, const char *file_name) {
-  FILE *tile_map_data_file = fopen(file_name, "wb");
+  // FILE *tile_map_data_file = fopen(file_name, "wb");
   
-  u32 file_size = tile_map->data.tiles_size;
-  fprintf(tile_map_data_file, "%d", file_size);
+  // // u32 file_size = tile_map->data.tiles_size;
+  // // fprintf(tile_map_data_file, "%d", file_size);
 
-  fclose(tile_map_data_file);
+  // fclose(tile_map_data_file);
   
   return ERR_OKAY;
+}
+
+p_fn err_code tr_create_map_layer(u32 index, u32 tiles_count_x, u32 tiles_count_y, TileMapDataLayer **out_layer) {
+  TileMapDataLayer *layer = (TileMapDataLayer*)malloc(sizeof(TileMapDataLayer));
+  if (!layer) {
+    return ERR_TR_ALLOC_MAP;
+  }
+  memset(layer, 0, sizeof(*layer));
+  
+  i32 *tiles_data = (int*)malloc(sizeof(i32)*tiles_count_x*tiles_count_y);
+  if (!tiles_data) {
+    free(layer);
+    return ERR_TR_ALLOC_MAP;
+  }
+  memset(tiles_data, -1, sizeof(i32)*tiles_count_x*tiles_count_y);
+  layer->layer_index = index; 
+  layer->layer_tiles_data = tiles_data;
+  layer->layer_tiles_count = tiles_count_x*tiles_count_y;
+
+  (*out_layer) = layer;
 }
 
 p_fn err_code tr_create_tile_map(const char *map_name, uint tiles_count_x, uint tiles_count_y, uint tile_size, TileMap **out) {
@@ -67,10 +87,14 @@ p_fn err_code tr_create_tile_map(const char *map_name, uint tiles_count_x, uint 
   tile_map->map_renderer_res.x = renderer_w;
   tile_map->map_renderer_res.y = renderer_h;
   
-  tile_map->data.tiles = (int*)malloc(sizeof(i32)*tiles_count_x*tiles_count_y);
-  if (tile_map->data.tiles) {
-    memset(tile_map->data.tiles, -1, sizeof(i32)*tiles_count_x*tiles_count_y);
-    tile_map->data.tiles_size = tiles_count_x*tiles_count_y;
+  TileMapDataLayer *default_layer = 0;
+  tr_create_map_layer(0, tiles_count_x, tiles_count_y, &default_layer);
+  
+  tile_map->data.layers[tile_map->data.layers_count++] = default_layer;
+  for (u32 i = 1; i < 3; i++) {
+    TileMapDataLayer *layer = 0;
+    tr_create_map_layer(i, tiles_count_x, tiles_count_y, &layer);
+    tile_map->data.layers[tile_map->data.layers_count++] = layer;
   }
   
   (*out) = tile_map;
@@ -199,7 +223,7 @@ p_private p_fn void tr_draw_selection_ui(TileMap *map, float screen_width, float
   
   al_set_target_bitmap(items_framebuffer);
   al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-  float texture_scale = 3.f;
+  float texture_scale = 3.5f;
   float texture_display_size = map->atlas.texture_size * texture_scale;
   float texture_y = 0, texture_x = 0;
 
@@ -319,21 +343,40 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
   }
 
   if (debug) {
-    if (map->data.tiles != NULL) {
+    if (al_key_down(state, ALLEGRO_KEY_0)) {
+      map->data.debug_layer_index = 0;
+    } else if (al_key_down(state, ALLEGRO_KEY_1)) {
+      map->data.debug_layer_index = 1;
+    } else if (al_key_down(state, ALLEGRO_KEY_2)) {
+      map->data.debug_layer_index = 2;
+    }
+    
+    assert(map->data.debug_layer_index < map->data.layers_count && map->data.debug_layer_index >= 0);
+    TileMapDataLayer *editing_layer = map->data.layers[map->data.debug_layer_index];
+    
+    ALLEGRO_FONT *mw_20;
+    rm_get_font("mw_20", &mw_20);
+    al_draw_textf(mw_20, al_map_rgba(255, 255, 255, 155), 24, 24, 0, "Selected Layer: %d", editing_layer->layer_index);
+
+    if (editing_layer != 0 && editing_layer->layer_tiles_data != 0) {
       u32 index = (selection_y/texture_size) * map->tiles_count_x + (selection_x/texture_size);
       if (al_key_down(state, ALLEGRO_KEY_F)) {
-        map->data.tiles[index] = currently_drawing;
+        editing_layer->layer_tiles_data[index] = currently_drawing;
       } else if (al_key_down(state, ALLEGRO_KEY_BACKSPACE)) {
-        map->data.tiles[index] = -1;
+        editing_layer->layer_tiles_data[index] = -1;
       }
     } else {
       fprintf(stderr, "[ERROR] %s:%d :: Map data is NULL!\n", __FILE__, __LINE__);
     }
   }
   
-  if (map->data.tiles != NULL) {
-    for (u32 i = 0; i < map->data.tiles_size; i++) {
-      i32 texture_index = map->data.tiles[i];
+  for (u32 layer_index = 0; layer_index < map->data.layers_count; layer_index++) {
+    printf("Rendering layer: %d\n", layer_index);
+    TileMapDataLayer *current_layer = map->data.layers[layer_index];
+    assert(current_layer->layer_tiles_data != NULL);
+
+    for (u32 i = 0; i < current_layer->layer_tiles_count; i++) {
+      i32 texture_index = current_layer->layer_tiles_data[i];
       
       switch (texture_index) {
         case -1: break; // Air block
@@ -352,8 +395,6 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
         } break;
       }
     }
-  } else {
-    fprintf(stderr, "[ERROR] %s:%d :: Map data is NULL!\n", __FILE__, __LINE__);
   }
 
   al_hold_bitmap_drawing(false);
