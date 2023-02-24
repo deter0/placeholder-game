@@ -48,7 +48,7 @@ typedef enum err_code {
 #define p_ASSERT_ERR(err) if (err != ERR_OKAY) { \
                             char errorBuffer[1024] = {0}; \
                             snprintf(errorBuffer, sizeof(errorBuffer), \
-                                    "[ERROR] %s:%d: EXPECTED 0x0 (ERR_OKAY) GOT ERROR: 0x%X. (Error codes can be looked up in `src/p/p.h`)", __FILE__, __LINE__, err); \
+                                    "FILE(%s:%d): EXPECTED 0x0 (ERR_OKAY) GOT ERROR: 0x%X. (Error codes can be looked up in `src/p/p.h`)", __FILE__, __LINE__, err); \
                             errorBuffer[sizeof(errorBuffer)] = 0; \
                             fprintf(stderr, "%s\n", errorBuffer); \
                             if (al_is_native_dialog_addon_initialized()) { \

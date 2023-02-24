@@ -38,13 +38,12 @@ p_fn err_code tr_save_tile_map_data_to_file(TileMap *tile_map, const char *file_
 }
 
 p_fn err_code tr_create_map_layer(u32 index, u32 tiles_count_x, u32 tiles_count_y, TileMapDataLayer **out_layer) {
-  TileMapDataLayer *layer = (TileMapDataLayer*)malloc(sizeof(TileMapDataLayer));
+  TileMapDataLayer *layer = (TileMapDataLayer*)calloc(1, sizeof(TileMapDataLayer));
   if (!layer) {
     return ERR_TR_ALLOC_MAP;
   }
-  memset(layer, 0, sizeof(*layer));
   
-  i32 *tiles_data = (int*)malloc(sizeof(i32)*tiles_count_x*tiles_count_y);
+  i32 *tiles_data = (int*)calloc(1, sizeof(i32)*tiles_count_x*tiles_count_y);
   if (!tiles_data) {
     free(layer);
     return ERR_TR_ALLOC_MAP;
@@ -58,12 +57,10 @@ p_fn err_code tr_create_map_layer(u32 index, u32 tiles_count_x, u32 tiles_count_
 }
 
 p_fn err_code tr_create_tile_map(const char *map_name, uint tiles_count_x, uint tiles_count_y, uint tile_size, TileMap **out) {
-  TileMap *tile_map = (TileMap*)malloc(sizeof(TileMap));
+  TileMap *tile_map = (TileMap*)calloc(1, sizeof(TileMap));
   if (tile_map == NULL) {
     return ERR_TR_ALLOC_MAP;
   }
-
-  memset(tile_map, 0, sizeof(TileMap));
   
   uint renderer_w = tiles_count_x * tile_size;
   uint renderer_h = tiles_count_y * tile_size;
@@ -371,7 +368,6 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
   }
   
   for (u32 layer_index = 0; layer_index < map->data.layers_count; layer_index++) {
-    printf("Rendering layer: %d\n", layer_index);
     TileMapDataLayer *current_layer = map->data.layers[layer_index];
     assert(current_layer->layer_tiles_data != NULL);
 

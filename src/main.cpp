@@ -16,6 +16,7 @@
 #include "resource_manager.h"
 #include "audio_manager.h"
 #include "tile_renderer.h"
+#include "ui.h"
 
 #include "player.h"
 
@@ -52,6 +53,8 @@ int main(int argc, char **argv) {
   printf("[DEBUG] Allegro inited.\n");
   p_ASSERT_ERR(rm_init());
   printf("[DEBUG] Resource Manager inited.\n");
+  // p_ASSERT_ERR(ui_init());
+  printf("[DEBUG] UI inited.\n");
   p_ASSERT_ERR(tr_init());
   printf("[DEBUG] Tile Renderer inited.\n");
   
@@ -103,21 +106,12 @@ int main(int argc, char **argv) {
   ALLEGRO_TIMER *frame_timer = al_create_timer(1.0 / 60.0);
   al_register_event_source(event_queue, al_get_timer_event_source(frame_timer));
   al_start_timer(frame_timer);
-  
-  // int g = -1;
-  // int TemplateMapData[] = {
-  //   g,    g,    g,    g,    g,
-  //   g,    g,    g,    g,    g,
-  //   g,    185,  40,   465,  g,
-  //   g,    345,  425,  445,  g,
-  //   g,    g,    g,    g,    g, -9999
-  // };
 
   TileMap *tile_map_a;
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
   p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 16, &tile_map_a));
   tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
-  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(asset.png));
+  ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(basictiles.png));
   assert(texture_atlas != NULL);
   
   p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 12, 0));
@@ -125,6 +119,45 @@ int main(int argc, char **argv) {
   ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;
   double last_frame = al_get_time();
+
+  UIObject *root = ui_new_object();
+  UIObject *c1 = ui_new_object();
+  root->size = glm::vec2(150.f);
+  root->layout.direction = UI_LAYOUT_DHORZVERT;
+  root->layout.margin = 8.f;
+  root->layout.padding = 8.f;
+  root->pri_color = al_map_rgba(255, 255, 255, 100);
+
+  c1->size_units[0] = UI_UAUTO;
+  c1->size_units[1] = UI_UAUTO;
+  c1->position_units[0] = UI_UAUTO;
+  c1->position_units[1] = UI_UAUTO;
+  c1->border.size = 1.f;
+  c1->border.color = al_map_rgb(255, 0, 255);
+  c1->text = "hi!";
+
+  UIObject *c2 = ui_new_object();
+  c2->position_units[0] = UI_UAUTO;
+  c2->position_units[1] = UI_UAUTO;
+  c2->size_units[0] = UI_UAUTO;
+  c2->size_units[1] = UI_UAUTO;
+  c2->border.size = 1.f;
+  c2->border.color = al_map_rgb(255, 0, 0);
+  c2->text = "Hello";
+  
+  ui_set_object_parent(c2, root);
+  ui_set_object_parent(c1, root);
+  for (u32 i = 0; i < 15; i++) {
+    UIObject *c = ui_new_object();
+    c->position_units[0] = UI_UAUTO;
+    c->position_units[1] = UI_UAUTO;
+    c->size.x = 25.f;
+    c->size.y = 25.f + (float)i;
+    c->border.size = 1.f;
+    c->border.color = al_map_rgb(255, 0, 0);
+    ui_set_object_parent(c, root);
+  }
+
 
   while (running) {
     ALLEGRO_EVENT event;
@@ -159,8 +192,14 @@ int main(int argc, char **argv) {
         float mouse_x = gmouse_x - win_x;
         float mouse_y = gmouse_y - win_y;
         
-        tr_tile_map_cam_input(tile_map_a, &state, delta_time);
-        tr_tile_map_render(tile_map_a, mouse_x, mouse_y, &state, true);
+        // tr_tile_map_cam_input(tile_map_a, &state, delta_time);
+        // tr_tile_map_render(tile_map_a, mouse_x, mouse_y, &state, true);
+        
+        root->children[5]->size = glm::vec2(30.f + cos(al_get_time()*3.f) * 30.f, 20.f);
+        root->size = glm::vec2(150.f + sin(al_get_time()) * 100);
+        for (u32 i = 0; i < 1000; i++) {
+          ui_render(root);
+        }
         
         al_flip_display();
 
@@ -170,9 +209,11 @@ int main(int argc, char **argv) {
         running = false;
       } break;
       case (ALLEGRO_EVENT_KEY_UP): {
-        // if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
-        //   audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStateToggle);
-        // }
+        if (event.keyboard.keycode == ALLEGRO_KEY_P) {
+          audio_manager_set_play_state(MusicFiles[WEIRD_FISHES], PlayStateToggle);
+        } else if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+          running = false;
+        }
       } break;
       case (ALLEGRO_EVENT_DISPLAY_RESIZE): {
         al_acknowledge_resize(display);

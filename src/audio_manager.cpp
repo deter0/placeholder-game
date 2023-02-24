@@ -114,7 +114,10 @@ p_fn err_code audio_manager_shutdown(void) {
     al_detach_audio_stream(music);
   }
 
-  al_destroy_mixer(mixer);
-  al_destroy_voice(voice);
+  // TODO(kay): Weird bug when destroying these (Callstack says from al_destroy_voice):
+  // ==> game: ./src/misc/list.c:443: _al_list_erase: Assertion `list == item->list' failed.
+  
+  // al_destroy_voice(voice);
+  // al_destroy_mixer(mixer);
   return ERR_OKAY;
 }

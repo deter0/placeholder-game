@@ -10,7 +10,7 @@ typedef struct p_array {
 } p_array;
 
 struct p_array_ret {
-  p_array array;
+  p_array *array;
   err_code error;
 };
 
@@ -27,6 +27,10 @@ p_fn void* p_arr_pop(p_array *array);
 
 p_fn void p_arr_at_(p_array *array, u64 index, u64 p_bytes elm_size, void *out);
 p_fn void p_arr_atb(p_array *array, u64 p_bytes index, u64 p_bytes elm_size, void *out);
+
+p_fn void p_arr_del_(p_array *array, u64 index, u64 p_bytes elm_size);
+
+#define p_arr_del(type, array, index) p_arr_del_(array, index, sizeof(type))
 
 #define p_arr_get(type, name, array, index) type name; \
                                             p_arr_at_(array, index, sizeof(type), &name)

@@ -7,7 +7,8 @@ sources = [
   './src/p/parr.cpp',
   './src/p/ppath.cpp',
   './src/resource_manager.cpp',
-  './src/audio_manager.cpp'
+  './src/audio_manager.cpp',
+  './src/ui.cpp'
 ]
 
 include_dirs = [
