@@ -3,6 +3,10 @@
 #include "p/p.h"
 #include "p/parr.h"
 
+typedef struct UIState {
+  glm::vec2 mouse_position;
+  glm::vec2 window_size;
+} UIState;
 
 enum UILayoutDir {
   UI_LAYOUT_DISABLE = 0,
@@ -28,7 +32,7 @@ typedef struct UILayout {
 typedef struct UIBorder {
   float size;
   ALLEGRO_COLOR color;
-};
+} UIBorder;
 
 static u32 object_tick = 0;
 typedef struct UIObject {
@@ -39,6 +43,8 @@ typedef struct UIObject {
   glm::vec2 position;
   enum UIUnit position_units[2];
   
+  glm::vec2 center;
+  
   glm::vec2 computed_size;
   glm::vec2 computed_position;
 
@@ -47,6 +53,10 @@ typedef struct UIObject {
   UIBorder border;
 
   char *text;
+  ALLEGRO_FONT *text_font;
+  float         text_font_size;
+  
+  ALLEGRO_BITMAP *image;
 
   UILayout layout;
 
@@ -59,4 +69,4 @@ typedef struct UIObject {
 
 void ui_set_object_parent(UIObject *subject, UIObject *new_parent);
 UIObject *ui_new_object();
-void ui_render(UIObject *subject);
+void ui_render(UIObject *subject, UIState *ui_state);

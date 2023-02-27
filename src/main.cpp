@@ -67,7 +67,6 @@ int main(int argc, char **argv) {
   printf("[DEBUG] Audio Manager inited.\n");
   
   p_ASSERT_ERR(rm_create_image("heart", RESOURCE_PATH(heart.png)));
-  // ASSERT_ERR(rm_delete_font("mw_16"));
   
   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
   al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
@@ -90,6 +89,9 @@ int main(int argc, char **argv) {
   if (al_install_mouse() == false) {
     fprintf(stderr, "Failed to install allegro mouse. Maybe mouse is not connected?");
   }
+  
+  p_ASSERT_ERR(rm_create_font("mw_20", RESOURCE_PATH(Merriweather.ttf), 20));
+  p_ASSERT_ERR(rm_create_font("mw", RESOURCE_PATH(Merriweather.ttf), 64));
   
   MusicParams params;
   audio_manager_get_music_params(MusicFiles[BODYSNATCHERS], &params);
@@ -121,41 +123,85 @@ int main(int argc, char **argv) {
   double last_frame = al_get_time();
 
   UIObject *root = ui_new_object();
-  UIObject *c1 = ui_new_object();
-  root->size = glm::vec2(150.f);
   root->layout.direction = UI_LAYOUT_DHORZVERT;
+  root->size_units[0] = UI_UPERC;
+  root->size_units[1] = UI_UPERC;
+  float padding = 0.01;
+  root->position = glm::vec2(padding);
+  root->position_units[0] = UI_UPERC;
+  root->position_units[1] = UI_UPERC;
+  root->size = glm::vec2(1.f, 1.f - padding*2.f);
   root->layout.margin = 8.f;
   root->layout.padding = 8.f;
-  root->pri_color = al_map_rgba(255, 255, 255, 100);
+  root->border.size = 6.f;
+  root->border.color = al_map_rgba(24, 24, 24, 200);
+  root->pri_color = al_map_rgba(255, 255, 255, 200);
 
-  c1->size_units[0] = UI_UAUTO;
-  c1->size_units[1] = UI_UAUTO;
-  c1->position_units[0] = UI_UAUTO;
-  c1->position_units[1] = UI_UAUTO;
-  c1->border.size = 1.f;
-  c1->border.color = al_map_rgb(255, 0, 255);
-  c1->text = "hi!";
+  ALLEGRO_FONT *default_font;
+  p_ASSERT_ERR(rm_get_font("mw", &default_font));
 
-  UIObject *c2 = ui_new_object();
-  c2->position_units[0] = UI_UAUTO;
-  c2->position_units[1] = UI_UAUTO;
-  c2->size_units[0] = UI_UAUTO;
-  c2->size_units[1] = UI_UAUTO;
-  c2->border.size = 1.f;
-  c2->border.color = al_map_rgb(255, 0, 0);
-  c2->text = "Hello";
+  {
+    UIObject *c1 = ui_new_object();
+    c1->size_units[0] = UI_UAUTO;
+    c1->size_units[1] = UI_UAUTO;
+    c1->position_units[0] = UI_UAUTO;
+    c1->position_units[1] = UI_UAUTO;
+    c1->border.size = 1.f;
+    c1->border.color = al_map_rgb(255, 0, 255);
+    c1->text = strdup("Yellow, black. Yellow, black. Yellow, black. Yellow, black.");
+    c1->text_font = default_font;
+    c1->text_font_size = 128;
+    
+    ui_set_object_parent(c1, root);
+  }
+  {
+    UIObject *c1 = ui_new_object();
+    c1->size_units[0] = UI_UAUTO;
+    c1->size_units[1] = UI_UAUTO;
+    c1->position_units[0] = UI_UAUTO;
+    c1->position_units[1] = UI_UAUTO;
+    c1->border.size = 1.f;
+    c1->border.color = al_map_rgb(255, 0, 255);
+    c1->text = strdup("You like jazz? If we lived in the topsy-turvy world Mr. Benson imagines, just think of what would it mean. I would have to negotiate with the silkworm for the elastic in my britches!");
+    c1->text_font = default_font;
+    c1->text_font_size = 32;
+    
+    ui_set_object_parent(c1, root);
+  }
   
-  ui_set_object_parent(c2, root);
-  ui_set_object_parent(c1, root);
-  for (u32 i = 0; i < 15; i++) {
-    UIObject *c = ui_new_object();
-    c->position_units[0] = UI_UAUTO;
-    c->position_units[1] = UI_UAUTO;
-    c->size.x = 25.f;
-    c->size.y = 25.f + (float)i;
-    c->border.size = 1.f;
-    c->border.color = al_map_rgb(255, 0, 0);
-    ui_set_object_parent(c, root);
+  rm_create_image("cow", RESOURCE_PATH(cow.jpg));
+  ALLEGRO_BITMAP *cow;
+  rm_get_image("cow", &cow);
+  
+  {
+    u32 to = 2;
+    for (u32 i = 0; i < to; i++) {
+      UIObject *c = ui_new_object();
+      c->position_units[0] = UI_UAUTO;
+      c->position_units[1] = UI_UAUTO;
+      c->size_units[0] = UI_UPERC;
+      c->size.x = 1.f;
+      c->size.y = 100.f;
+      c->pri_color = al_map_rgba_f((float)i / (float)to, (rand()%255)/255.f, 1.f - (float)i/(float)to, 1.f);
+      c->border.size = 1.f;
+      c->border.color = al_map_rgb(255, 0, 0);
+      c->image = cow;
+      ui_set_object_parent(c, root);
+      
+      UIObject *test = ui_new_object();
+      test->position_units[0] = UI_UPERC;
+      test->position_units[1] = UI_UPERC;
+      test->position = glm::vec2(0.5f);
+      test->size_units[0] = UI_UAUTO;
+      test->size_units[1] = UI_UAUTO;
+      test->border.size = 1.f;
+      test->border.color = al_map_rgb(255, 0, 0);
+      test->text = strdup("Scaled");
+      test->text_font = default_font;
+      test->text_font_size = 16;
+      test->center = glm::vec2(0.5f, 0.5f);
+      ui_set_object_parent(test, c);
+    }
   }
 
 
@@ -173,7 +219,7 @@ int main(int argc, char **argv) {
         al_get_keyboard_state(&state);
         player_handle_input(&player, delta_time, &state);
 
-        al_clear_to_color(al_map_rgba(24, 0, 16, 0));
+        al_clear_to_color(al_map_rgba(0, 0, 0, 0));
         
         float gmouse_x = 0, gmouse_y = 0;
         float win_x = 0, win_y = 0;
@@ -194,12 +240,16 @@ int main(int argc, char **argv) {
         
         // tr_tile_map_cam_input(tile_map_a, &state, delta_time);
         // tr_tile_map_render(tile_map_a, mouse_x, mouse_y, &state, true);
+  
+        UIState current_state;
+        current_state.mouse_position = glm::vec2(mouse_x, mouse_y);
         
-        root->children[5]->size = glm::vec2(30.f + cos(al_get_time()*3.f) * 30.f, 20.f);
-        root->size = glm::vec2(150.f + sin(al_get_time()) * 100);
-        for (u32 i = 0; i < 1000; i++) {
-          ui_render(root);
-        }
+        // root->children[0]->text_font_size = (0.5f+sin(al_get_time()))*30.f+25.f;
+        
+        current_state.window_size = glm::vec2((float)al_get_display_width(display),
+                                              (float)al_get_display_height(display));
+        
+        ui_render(root, &current_state);
         
         al_flip_display();
 

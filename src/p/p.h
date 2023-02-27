@@ -43,13 +43,17 @@ typedef enum err_code {
   // Tile Renderer, series (0xAD0)
   ERR_TR                = 0xAD0, // - Generic Error
   ERR_TR_ALLOC_MAP      = 0xAD1, // - Error allocating memory for tile map (includes atlas)
+  
+  // P Font, series (0xAE0)
+  ERR_PF = 0x0AE0,
+  ERR_PF_ALLOC = 0xAE0
 } err_code;
 
 #define p_ASSERT_ERR(err) if (err != ERR_OKAY) { \
                             char errorBuffer[1024] = {0}; \
                             snprintf(errorBuffer, sizeof(errorBuffer), \
-                                    "FILE(%s:%d): EXPECTED 0x0 (ERR_OKAY) GOT ERROR: 0x%X. (Error codes can be looked up in `src/p/p.h`)", __FILE__, __LINE__, err); \
-                            errorBuffer[sizeof(errorBuffer)] = 0; \
+                                    "in function `%s` in file `%s:%d`: EXPECTED 0x0 (ERR_OKAY) GOT ERROR: 0x%X. (Error codes can be looked up in `src/p/p.h`)", __PRETTY_FUNCTION__, __FILE__, __LINE__, err); \
+                            errorBuffer[sizeof(errorBuffer)-1] = 0; \
                             fprintf(stderr, "%s\n", errorBuffer); \
                             if (al_is_native_dialog_addon_initialized()) { \
                               al_show_native_message_box(NULL, \
@@ -58,6 +62,18 @@ typedef enum err_code {
                             } \
                             exit(1); \
                           }
+
+#define p_UNIMPLEMENTED() char errorBuffer[1024] = {0}; \
+                          snprintf(errorBuffer, sizeof(errorBuffer), \
+                                  "in function `%s` in file `%s:%d`: UNIMPLEMENTED", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+                          errorBuffer[sizeof(errorBuffer)-1] = 0; \
+                          fprintf(stderr, "%s\n", errorBuffer); \
+                          if (al_is_native_dialog_addon_initialized()) { \
+                            al_show_native_message_box(NULL, \
+                                                           "Fatal Error", "Placeholder ran into a fatal error:", errorBuffer, \
+                                                           0, ALLEGRO_MESSAGEBOX_ERROR); \
+                          } \
+                          exit(1);
 
 #define p_byte u8
 

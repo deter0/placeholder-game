@@ -21,8 +21,6 @@
 p_private u32 currently_drawing = 0;
 
 p_fn err_code tr_init() {
-  p_ASSERT_ERR(rm_create_font("mw_20", RESOURCE_PATH(Merriweather.ttf), 20));
-  
   return ERR_OKAY;
 }
 
