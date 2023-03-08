@@ -14,11 +14,13 @@
 
 #include "p/p.h"
 
+#include "pfont.h"
+
 #define IMAGES_INITIAL_SIZE 256
 struct hashmap_s loaded_images;
 
 #define FONTS_INITIAL_SIZE 16
-struct hashmap_s loaded_fonts;
+struct hashmap_s loaded_pfonts;
 
 #define AUDIO_STREAM_INITIAL_SIZE 16
 struct hashmap_s loaded_audio_streams;
@@ -27,7 +29,7 @@ p_fn err_code rm_init(void) {
   if (hashmap_create(IMAGES_INITIAL_SIZE, &loaded_images) != 0) {
     return ERR_NOKAY;
   }
-  if (hashmap_create(FONTS_INITIAL_SIZE, &loaded_fonts) != 0) {
+  if (hashmap_create(FONTS_INITIAL_SIZE, &loaded_pfonts) != 0) {
     return ERR_NOKAY;
   }
   if (hashmap_create(AUDIO_STREAM_INITIAL_SIZE, &loaded_audio_streams) != 0) {
@@ -126,30 +128,42 @@ p_fn err_code rm_get_image(const char *image_name, ALLEGRO_BITMAP **bitmap_outpu
 // -- Images --
 // ++ Fonts ++
 
-p_private p_fn int free_all_fonts_itr(void* const context, struct hashmap_element_s *element) {
+#define MAX_DESTROY (FONTS_INITIAL_SIZE*2)
+p_private p_font *destroyed[MAX_DESTROY] = {0};
+p_private u32 destroyed_size = 0;
+
+p_private p_fn int free_all_pfonts_itr(void* const context, struct hashmap_element_s *element) {
   printf("Freeing Font: %s\n", element->key);
   
-  ALLEGRO_FONT *font = (ALLEGRO_FONT*)element->data;
-  al_destroy_font(font);
+  p_font *font = (p_font*)element->data;
+  for (u32 i = 0; i < destroyed_size; i++) {
+    if (destroyed[i] == font) {
+      return -1;
+    }
+  }
+
+  pfont_destroy(font);
+  assert(destroyed_size < MAX_DESTROY); // TODO(kay): Maybe clear previously destroyed or grow array? Or make a global array for all the assets
+  destroyed[destroyed_size++] = font;
 
   return -1;
 }
 
 p_fn err_code free_all_fonts(void) {
-  if (hashmap_iterate_pairs(&loaded_fonts, free_all_fonts_itr, NULL) != 0) {
+  if (hashmap_iterate_pairs(&loaded_pfonts, free_all_pfonts_itr, NULL) != 0) {
     fprintf(stderr, "failed to deallocate hashmap entries (Fonts)\n");
     // return ERR_RM_FAILED_DESTROY;
   }
-  hashmap_destroy(&loaded_fonts);
+  hashmap_destroy(&loaded_pfonts);
   return ERR_OKAY;
 }
 
-p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_font) {
-  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
-                                                  font_name,
-                                                  strlen(font_name));
+p_fn err_code rm_insert_font(const char *font_name, p_font *precreated_font) {
+  p_font* font = (p_font*)hashmap_get(&loaded_pfonts,
+                                      font_name,
+                                      strlen(font_name));
   if (font == NULL) {
-    if (hashmap_put(&loaded_fonts, font_name, strlen(font_name), precreated_font) != 0) {
+    if (hashmap_put(&loaded_pfonts, font_name, strlen(font_name), precreated_font) != 0) {
       return ERR_RM;
     }
     return ERR_OKAY;
@@ -158,43 +172,40 @@ p_fn err_code rm_insert_font(const char *font_name, ALLEGRO_FONT *precreated_fon
   }
 }
 
-p_fn err_code rm_create_font(const char *font_name, const char *file_path, u32 font_size) {
+p_fn err_code rm_create_pfont(const char *font_name, const char *file_path) {
   printf("Loading Font: %s\n", file_path);
   
-  ALLEGRO_FONT *font = al_load_ttf_font(file_path, (int)font_size, ALLEGRO_TTF_NO_AUTOHINT);
-  if (!font) {
-    return ERR_RM_LOADING_RESOURCES;
-  }
+  p_font *font;
+  p_ASSERT_ERR(pfont_load_from_file(file_path, &font));
 
   err_code result = rm_insert_font(font_name, font);
   if (result != ERR_OKAY) {
-    al_destroy_font(font);
+    pfont_destroy(font);
   }
   
   return result;
 }
 
 p_fn err_code rm_delete_font(const char *font_name) {
-  ALLEGRO_FONT* font = (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
-                                                  font_name,
-                                                  strlen(font_name));
+  p_font* font = (p_font*)hashmap_get(&loaded_pfonts,
+                                      font_name,
+                                      strlen(font_name));
 
   if (font == NULL) {
     return ERR_RM_NOT_FOUND;
   } else {
-    if (hashmap_remove(&loaded_fonts, font_name, strlen(font_name)) != 0) {
+    if (hashmap_remove(&loaded_pfonts, font_name, strlen(font_name)) != 0) {
       return ERR_RM;
     }
-    al_destroy_font(font);
+    pfont_destroy(font);
     return ERR_OKAY;
   }
 }
 
-p_fn err_code rm_get_font(const char *font_name, ALLEGRO_FONT **font_output) {
-  ALLEGRO_FONT* font =
-        (ALLEGRO_FONT*)hashmap_get(&loaded_fonts,
-                                    font_name,
-                                    strlen(font_name));
+p_fn err_code rm_get_font(const char *font_name, p_font **font_output) {
+  p_font* font = (p_font*)hashmap_get(&loaded_pfonts,
+                                      font_name,
+                                      strlen(font_name));
   
   if (font == NULL) {
     (*font_output) = NULL;
