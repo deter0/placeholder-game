@@ -9,12 +9,12 @@
 
 #include "p/p.h"
 
-enum SoundEffects {
-  SAD = 0  
-};
-p_private const char *SoundEffectsFiles[] = {
-  [SAD] = "./resources/sad.wav"
-};
+// enum SoundEffects {
+//   SAD = 0  
+// };
+// p_private const char *SoundEffectsFiles[] = {
+//   [SAD] = "./resources/sad.wav"
+// };
 
 enum Music {
   WEIRD_FISHES = 0,

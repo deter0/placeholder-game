@@ -14,6 +14,9 @@
 #include "tile_renderer.h"
 #include "p/ppath.h"
 
+#include "ui.h"
+#include "pfont.h"
+
 // TODO(kay): Create `map_renderer_bitmap` with the TileMap struct and calculate the width and the height or get it as a parameter e.g. CreateMap(TilesX, TilesY, TilesSize, ...)
 // TODO(kay): Restructure map data to be a continous buffer that is allocated when created, rewrite renderer
 // TODO(kay): Reading and writing map data from a file
@@ -52,6 +55,8 @@ p_fn err_code tr_create_map_layer(u32 index, u32 tiles_count_x, u32 tiles_count_
   layer->layer_tiles_count = tiles_count_x*tiles_count_y;
 
   (*out_layer) = layer;
+  
+  return ERR_OKAY;
 }
 
 p_fn err_code tr_create_tile_map(const char *map_name, uint tiles_count_x, uint tiles_count_y, uint tile_size, TileMap **out) {
@@ -116,13 +121,13 @@ p_private p_fn float round_to_m(float n, float mult) {
   return floorf((n + mult / 2.0f) / mult) * mult;
 }
 
-p_private p_fn float round_to_dp(float n, int num_decimal_places) {
-  float mult = pow((float)10, (float)num_decimal_places);
-  return floorf(n * mult + 0.5f) / mult;
-}
-p_private p_fn float map_range_f(float x, float in_min, float in_max, float out_min, float out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+// p_private p_fn float round_to_dp(float n, int num_decimal_places) {
+//   float mult = pow((float)10, (float)num_decimal_places);
+//   return floorf(n * mult + 0.5f) / mult;
+// }
+// p_private p_fn float map_range_f(float x, float in_min, float in_max, float out_min, float out_max) {
+//   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+// }
 
 p_private p_fn float lerp_f(float a, float b, float t) {
   return a + (b - a) * t;
@@ -181,6 +186,46 @@ p_private p_fn void tr_draw_grid(TileMap *map) {
   }
 }
 
+
+#if 1
+UIObject *root_tm_editor;
+
+p_private p_fn void init_tm_editor() {
+  p_font *ui_font;
+  rm_get_font("mw", &ui_font);
+  
+  root_tm_editor = ui_new_object();
+  root_tm_editor->size.unit_x = UI_UPIXS;
+  root_tm_editor->size.unit_y = UI_UPERC;
+  root_tm_editor->pri_color = al_map_rgba(24, 24, 24, 255);
+  root_tm_editor->size.val = glm::vec2(275.f, 1.f);
+
+  // root_tm_editor->layout.direction = UI_LAYOUT_DHORZVERT;
+  root_tm_editor->layout.margin.val = 20.f;
+
+  UIObject *container = ui_new_object();
+  // container->layout.direction = UI_LAYOUT_DHORZVERT;
+  container->layout.margin.val = 20.f;
+  container->layout.padding.val = 10.f;
+  
+  for (u32 i = 0; i < 5; i++) {
+    UIObject *text_object = ui_new_object();
+    text_object->pri_color = al_map_rgb(255, 255, 255);
+    text_object->size.val = glm::vec2(50 + i*20, 50);
+    ui_set_object_parent(text_object, container);
+  }
+  
+  ui_set_object_parent(container, root_tm_editor);
+}
+
+p_private p_fn void tr_draw_selection_ui(TileMap *map, UIState *state) {
+  if (root_tm_editor == 0) {
+    init_tm_editor();
+  }
+  
+  ui_render(root_tm_editor, state);
+} 
+#else
 #define SEL_PADDING (10.f)
 p_private p_fn void tr_draw_selection_ui(TileMap *map, float screen_width, float screen_height, float mouse_x, float mouse_y) {
   float selection_window_size_x = 280, selection_window_size_y = screen_height - SEL_PADDING*2.f;
@@ -209,12 +254,12 @@ p_private p_fn void tr_draw_selection_ui(TileMap *map, float screen_width, float
   al_draw_filled_rectangle(0, 0, selection_menu_size.x, selection_menu_size.y, al_map_rgb(60, 60, 60));
   al_draw_rectangle(0, 0, selection_menu_size.x, selection_menu_size.y, al_map_rgb(125, 125, 125), 2.f);
 
-  ALLEGRO_FONT *mw_20;
+  p_font *mw_20;
   p_ASSERT_ERR(rm_get_font("mw_20", &mw_20));
   
-  al_draw_text(mw_20, al_map_rgb(255, 255, 255),
-              SEL_PADDING, SEL_PADDING,
-              0, "Select Image");
+  al_draw_text(pfont_get_size(mw_20, 20), al_map_rgb(255, 255, 255),
+               SEL_PADDING, SEL_PADDING,
+               0, "Select Image");
   
   al_set_target_bitmap(items_framebuffer);
   al_clear_to_color(al_map_rgba(0, 0, 0, 0));
@@ -303,8 +348,9 @@ p_private p_fn void tr_draw_selection_ui(TileMap *map, float screen_width, float
         selection_top_left_y = screen_height - selection_menu_size.y - SEL_PADDING;
   al_draw_bitmap(selection_menu_framebuffer, selection_top_left_x, selection_top_left_y, 0);
 }
+#endif
 
-p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALLEGRO_KEYBOARD_STATE *state, bool debug) {
+p_fn err_code tr_tile_map_render(TileMap *map, UIState *state, bool debug) {
   u32 texture_size = map->atlas.texture_size;
   
   float dx = -map->camera_position.x;
@@ -312,8 +358,8 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
   float dsx = map->map_renderer_res.x + map->camera_position.z;
   float dsy = map->map_renderer_res.y + map->camera_position.z;
 
-  float selection_x = round_to_m((mouse_x - texture_size/2.f - dx) / dsx * map->map_renderer_res.x, texture_size);
-  float selection_y = round_to_m((mouse_y - texture_size/2.f - dy) / dsy * map->map_renderer_res.y, texture_size);
+  float selection_x = round_to_m((state->mouse_position.x - texture_size/2.f - dx) / dsx * map->map_renderer_res.x, texture_size);
+  float selection_y = round_to_m((state->mouse_position.y - texture_size/2.f - dy) / dsy * map->map_renderer_res.y, texture_size);
   if (selection_x > map->map_renderer_res.x - texture_size) {
     selection_x = map->map_renderer_res.x - texture_size;
   }
@@ -338,26 +384,26 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
   }
 
   if (debug) {
-    if (al_key_down(state, ALLEGRO_KEY_0)) {
+    if (al_key_down(state->keyboard_state, ALLEGRO_KEY_0)) {
       map->data.debug_layer_index = 0;
-    } else if (al_key_down(state, ALLEGRO_KEY_1)) {
+    } else if (al_key_down(state->keyboard_state, ALLEGRO_KEY_1)) {
       map->data.debug_layer_index = 1;
-    } else if (al_key_down(state, ALLEGRO_KEY_2)) {
+    } else if (al_key_down(state->keyboard_state, ALLEGRO_KEY_2)) {
       map->data.debug_layer_index = 2;
     }
     
     assert(map->data.debug_layer_index < map->data.layers_count && map->data.debug_layer_index >= 0);
     TileMapDataLayer *editing_layer = map->data.layers[map->data.debug_layer_index];
     
-    ALLEGRO_FONT *mw_20;
+    p_font *mw_20;
     rm_get_font("mw_20", &mw_20);
-    al_draw_textf(mw_20, al_map_rgba(255, 255, 255, 155), 24, 24, 0, "Selected Layer: %d", editing_layer->layer_index);
+    al_draw_textf(pfont_get_size(mw_20, 20), al_map_rgba(255, 255, 255, 155), 24, 24, 0, "Selected Layer: %d", editing_layer->layer_index);
 
     if (editing_layer != 0 && editing_layer->layer_tiles_data != 0) {
       u32 index = (selection_y/texture_size) * map->tiles_count_x + (selection_x/texture_size);
-      if (al_key_down(state, ALLEGRO_KEY_F)) {
+      if (al_key_down(state->keyboard_state, ALLEGRO_KEY_F)) {
         editing_layer->layer_tiles_data[index] = currently_drawing;
-      } else if (al_key_down(state, ALLEGRO_KEY_BACKSPACE)) {
+      } else if (al_key_down(state->keyboard_state, ALLEGRO_KEY_BACKSPACE)) {
         editing_layer->layer_tiles_data[index] = -1;
       }
     } else {
@@ -416,14 +462,12 @@ p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALL
     al_draw_filled_circle(dx+dsx, dy+dsy, 4, al_map_rgb(139, 0, 135));
     al_draw_rectangle(dx, dy, dx+dsx, dy+dsy, al_map_rgb(139, 0, 135), 1.f);
     
-    ALLEGRO_FONT *mw_20;
-    rm_get_font("mw_20", &mw_20);
-    al_draw_textf(mw_20, al_map_rgba(255, 0, 255, 200), 12, 12, 0, "Selection: %d, %d", (int)selection_x/texture_size, (int)selection_y/texture_size);
+    // p_font *mw_20;
+    // rm_get_font("mw_20", &mw_20);
+    // al_draw_textf(pfont_get_size(mw_20, 20), al_map_rgba(255, 0, 255, 200), 12, 12, 0, "Selection: %d, %d", (int)selection_x/texture_size, (int)selection_y/texture_size);
     
     al_set_target_bitmap(previous_target); 
-    tr_draw_selection_ui(map, (float)al_get_bitmap_width(previous_target),
-                        (float)al_get_bitmap_height(previous_target),
-                        mouse_x, mouse_y);
+    tr_draw_selection_ui(map, state);
   }
   
   return ERR_OKAY;

@@ -49,6 +49,7 @@ p_private p_fn void init_allegro(void) {
 }
 
 int main(int argc, char **argv) {
+  printf("sizeof(glm::vec2) = %ld\n", sizeof(glm::vec2));
   init_allegro();
   printf("[DEBUG] Allegro inited.\n");
   p_ASSERT_ERR(rm_init());
@@ -90,8 +91,11 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Failed to install allegro mouse. Maybe mouse is not connected?");
   }
   
-  p_ASSERT_ERR(rm_create_font("mw_20", RESOURCE_PATH(Merriweather.ttf), 20));
-  p_ASSERT_ERR(rm_create_font("mw", RESOURCE_PATH(Merriweather.ttf), 64));
+  p_font *mw = 0;
+  pfont_load_from_file(RESOURCE_PATH(Merriweather.ttf), &mw);
+  
+  p_ASSERT_ERR(rm_insert_font("mw_20", mw));
+  p_ASSERT_ERR(rm_insert_font("mw", mw));
   
   MusicParams params;
   audio_manager_get_music_params(MusicFiles[BODYSNATCHERS], &params);
@@ -113,97 +117,15 @@ int main(int argc, char **argv) {
   // p_ASSERT_ERR(tr_new_tile_map((int*)TemplateMapData, "map_a", "./resources/texture_atlas_sample.png", 16, 20, &tile_map_a));
   p_ASSERT_ERR(tr_create_tile_map("map_a", 200, 200, 16, &tile_map_a));
   tr_save_tile_map_data_to_file(tile_map_a, "./map-data.bin");
+  
+  al_set_new_bitmap_flags(0);
   ALLEGRO_BITMAP *texture_atlas = al_load_bitmap(RESOURCE_PATH(basictiles.png));
   assert(texture_atlas != NULL);
   
   p_ASSERT_ERR(tr_map_provide_atlas(tile_map_a, texture_atlas, 12, 0));
   
-  ALLEGRO_BITMAP *screen_buffer = al_create_bitmap(200, 200);
   bool running = true;
   double last_frame = al_get_time();
-
-  UIObject *root = ui_new_object();
-  root->layout.direction = UI_LAYOUT_DHORZVERT;
-  root->size_units[0] = UI_UPERC;
-  root->size_units[1] = UI_UPERC;
-  float padding = 0.01;
-  root->position = glm::vec2(padding);
-  root->position_units[0] = UI_UPERC;
-  root->position_units[1] = UI_UPERC;
-  root->size = glm::vec2(1.f, 1.f - padding*2.f);
-  root->layout.margin = 8.f;
-  root->layout.padding = 8.f;
-  root->border.size = 6.f;
-  root->border.color = al_map_rgba(24, 24, 24, 200);
-  root->pri_color = al_map_rgba(255, 255, 255, 200);
-
-  ALLEGRO_FONT *default_font;
-  p_ASSERT_ERR(rm_get_font("mw", &default_font));
-
-  {
-    UIObject *c1 = ui_new_object();
-    c1->size_units[0] = UI_UAUTO;
-    c1->size_units[1] = UI_UAUTO;
-    c1->position_units[0] = UI_UAUTO;
-    c1->position_units[1] = UI_UAUTO;
-    c1->border.size = 1.f;
-    c1->border.color = al_map_rgb(255, 0, 255);
-    c1->text = strdup("Yellow, black. Yellow, black. Yellow, black. Yellow, black.");
-    c1->text_font = default_font;
-    c1->text_font_size = 128;
-    
-    ui_set_object_parent(c1, root);
-  }
-  {
-    UIObject *c1 = ui_new_object();
-    c1->size_units[0] = UI_UAUTO;
-    c1->size_units[1] = UI_UAUTO;
-    c1->position_units[0] = UI_UAUTO;
-    c1->position_units[1] = UI_UAUTO;
-    c1->border.size = 1.f;
-    c1->border.color = al_map_rgb(255, 0, 255);
-    c1->text = strdup("You like jazz? If we lived in the topsy-turvy world Mr. Benson imagines, just think of what would it mean. I would have to negotiate with the silkworm for the elastic in my britches!");
-    c1->text_font = default_font;
-    c1->text_font_size = 32;
-    
-    ui_set_object_parent(c1, root);
-  }
-  
-  rm_create_image("cow", RESOURCE_PATH(cow.jpg));
-  ALLEGRO_BITMAP *cow;
-  rm_get_image("cow", &cow);
-  
-  {
-    u32 to = 2;
-    for (u32 i = 0; i < to; i++) {
-      UIObject *c = ui_new_object();
-      c->position_units[0] = UI_UAUTO;
-      c->position_units[1] = UI_UAUTO;
-      c->size_units[0] = UI_UPERC;
-      c->size.x = 1.f;
-      c->size.y = 100.f;
-      c->pri_color = al_map_rgba_f((float)i / (float)to, (rand()%255)/255.f, 1.f - (float)i/(float)to, 1.f);
-      c->border.size = 1.f;
-      c->border.color = al_map_rgb(255, 0, 0);
-      c->image = cow;
-      ui_set_object_parent(c, root);
-      
-      UIObject *test = ui_new_object();
-      test->position_units[0] = UI_UPERC;
-      test->position_units[1] = UI_UPERC;
-      test->position = glm::vec2(0.5f);
-      test->size_units[0] = UI_UAUTO;
-      test->size_units[1] = UI_UAUTO;
-      test->border.size = 1.f;
-      test->border.color = al_map_rgb(255, 0, 0);
-      test->text = strdup("Scaled");
-      test->text_font = default_font;
-      test->text_font_size = 16;
-      test->center = glm::vec2(0.5f, 0.5f);
-      ui_set_object_parent(test, c);
-    }
-  }
-
 
   while (running) {
     ALLEGRO_EVENT event;
@@ -215,9 +137,9 @@ int main(int argc, char **argv) {
         double delta_time = frame_now - last_frame;
         // printf("%f\n", 1.f/delta_time);
         
-        ALLEGRO_KEYBOARD_STATE state;
-        al_get_keyboard_state(&state);
-        player_handle_input(&player, delta_time, &state);
+        ALLEGRO_KEYBOARD_STATE keyboard_state;
+        al_get_keyboard_state(&keyboard_state);
+        player_handle_input(&player, delta_time, &keyboard_state);
 
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
         
@@ -238,18 +160,17 @@ int main(int argc, char **argv) {
         float mouse_x = gmouse_x - win_x;
         float mouse_y = gmouse_y - win_y;
         
-        // tr_tile_map_cam_input(tile_map_a, &state, delta_time);
-        // tr_tile_map_render(tile_map_a, mouse_x, mouse_y, &state, true);
   
         UIState current_state;
         current_state.mouse_position = glm::vec2(mouse_x, mouse_y);
         
-        // root->children[0]->text_font_size = (0.5f+sin(al_get_time()))*30.f+25.f;
-        
         current_state.window_size = glm::vec2((float)al_get_display_width(display),
                                               (float)al_get_display_height(display));
+                                              
+        current_state.keyboard_state = &keyboard_state;
         
-        ui_render(root, &current_state);
+        tr_tile_map_cam_input(tile_map_a, &keyboard_state, delta_time);
+        tr_tile_map_render(tile_map_a, &current_state, true);
         
         al_flip_display();
 

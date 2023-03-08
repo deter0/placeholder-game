@@ -44,6 +44,36 @@ void ui_set_object_parent(UIObject *subject, UIObject *new_parent) {
   }  
 }
 
+static float ui_compute_ui_val(UIObject *object, UIValue val) {
+  switch (val.unit) {
+    case (UI_UPIXS): {
+      return val.val;
+    } break;
+    case (UI_UPERC): {
+      p_UNIMPLEMENTED();
+    } break;
+    case (UI_UAUTO): {
+      p_UNIMPLEMENTED();
+    }
+    default: {
+      p_UNREACHABLE();
+    } break;
+  }
+}
+
+static glm::vec2 ui_compute_ui_vec2(UIObject *object, UIVec vec2) {
+  return glm::vec2(
+    ui_compute_ui_val(object, (UIValue){
+      .val = vec2.val.x,
+      .unit = vec2.unit_x
+    }),
+    ui_compute_ui_val(object, (UIValue){
+      .val = vec2.val.y,
+      .unit = vec2.unit_y
+    })
+  );
+}
+
 UIObject *ui_new_object() {
   // TODO(kay): Use a memory pool for optimization & make code cache friendly when looping
   UIObject *created_object = (UIObject*)calloc(1, sizeof(UIObject));
@@ -61,6 +91,14 @@ UIObject *ui_new_object() {
   return created_object;
 }
 
+UIObject *ui_object_dup(UIObject *subject) {
+  UIObject *new_object = (UIObject*)malloc(sizeof(*subject));
+  memcpy(new_object, subject, sizeof(*subject));
+  new_object->object_id = ++object_tick;
+  
+  return new_object;
+}
+
 static void ui_compute_sizes(UIObject *subject, UIState *state) {
   for (u32 i = 0; i < subject->children_count; i++) {
     ui_compute_sizes(subject->children[i], state);
@@ -70,73 +108,76 @@ static void ui_compute_sizes(UIObject *subject, UIState *state) {
   glm::vec2 parent_size = state->window_size;
   if (parent) {
     parent_size = parent->computed_size;
-    if (parent->layout.direction != UI_LAYOUT_DISABLE) {
-      parent_size -= glm::vec2(parent->layout.margin*2.f);
+    if (parent->layout.enable) {
+      parent_size -= glm::vec2(ui_compute_ui_val(parent, parent->layout.margin) * 2.f);
     }
   }
   
   glm::vec2 text_size;
   if (subject->text && subject->text_font) {
     int bbx, bby, bbw, bbh;
-    al_get_text_dimensions(subject->text_font, subject->text,
+    ALLEGRO_FONT *font = pfont_get_size(subject->text_font, (u32)subject->text_font_size);
+    al_get_text_dimensions(font, subject->text,
                            &bbx, &bby, &bbw, &bbh);
     
-    float ratio = (float)(bbh)/(float)(bbw);
-    float new_w = subject->text_font_size/ratio;
-    
-    text_size.x = new_w;
-    text_size.y = subject->text_font_size;
+    text_size.x = bbw;
+    text_size.y = bbh;
   } else if (subject->text && !subject->text_font) {
     fprintf(stderr, "[WARNING]: Text set on object but not font set. (Object ID: %d, Text: '%s')!\n", subject->object_id, subject->text);
   }
 
-  float computed_size_x = 0.f;
-  switch (subject->size_units[0]) {
-    case (UI_UPERC): {
-      computed_size_x = parent_size.x * subject->size.x;
-    } break;
+  // float computed_size_x = 0.f;
+  // switch (subject->size_units[0]) {
+  //   case (UI_UPERC): {
+  //     computed_size_x = parent_size.x * subject->size.x;
+  //   } break;
 
-    case (UI_UAUTO): {
-      if (text_size.x > 0 || text_size.y > 0) {
-        computed_size_x = text_size.x;
-      } else {
-        // Post Layout Position Computations
-        p_UNIMPLEMENTED();
-      }
-    } break;
+  //   case (UI_UAUTO): {
+  //     if (text_size.x > 0 || text_size.y > 0) {
+  //       computed_size_x = text_size.x;
+  //     } else {
+  //       // Post Layout Position Computations
+  //       p_UNIMPLEMENTED();
+  //     }
+  //   } break;
     
-    case (UI_UPIXS):
-    default: {
-      computed_size_x = subject->size.x;
-    } break;
-  }
-  subject->computed_size.x = computed_size_x;
+  //   case (UI_UPIXS):
+  //   default: {
+  //     computed_size_x = subject->size.x;
+  //   } break;
+  // }
+  // subject->computed_size.x = computed_size_x;
 
-  float computed_size_y = 0.f;
-  {
-    switch (subject->size_units[1]) {
-      case (UI_UPERC): {
-        computed_size_y = parent_size.y * subject->size.y;
-      } break;
+  // float computed_size_y = 0.f;
+  // {
+  //   switch (subject->size.unit_x) {
+  //     case (UI_UPERC): {
+  //       computed_size_y = parent_size.y * subject->size.y;
+  //     } break;
 
-      case (UI_UAUTO): {
-        if (text_size.x > 0 || text_size.y > 0) {
-          computed_size_y = text_size.y;
-        } else {
-          // Post Layout Position Computations
-          p_UNIMPLEMENTED();
-        }
-      } break;
+  //     case (UI_UAUTO): {
+  //       if (text_size.x > 0 || text_size.y > 0) {
+  //         computed_size_y = text_size.y;
+  //       } else {
+  //         // Post Layout Position Computations
+  //         p_UNIMPLEMENTED();
+  //       }
+  //     } break;
       
-      case (UI_UPIXS):
-      default: {
-        computed_size_y = subject->size.y;
-      } break;
-    }
-  }
-  subject->computed_size.y = computed_size_y;
+  //     case (UI_UPIXS):
+  //     default: {
+  //       glm::vec2 size = ui_compute_ui_vec2(subject, subject->size);
+  //       computed_size_y = size.y;
+  //     } break;
+  //   }
+  // }
+  // subject->computed_size.y = computed_size_y;
 }
 
+static void ui_compute_just_start(UIObject *parent, UIObject *child, float *remember_x) {
+  child->computed_position.x = *remember_x;
+  (*remember_x) += child->computed_size.x + ui_compute_ui_val(parent, parent->layout.padding) + ui_compute_ui_val(parent, parent->layout.margin);
+}
 // TODO(kay): Layouts inside layouts with automatic sizes? Too complicated for now, do later.
 //            -> Can compute child layouts first and then figure out their size and then computer our layout.
 static void ui_compute_layouts(UIObject *subject, UIState *state) {
@@ -145,50 +186,29 @@ static void ui_compute_layouts(UIObject *subject, UIState *state) {
   }
   
   UILayout current_layout = subject->layout;
-  if (current_layout.direction != UI_LAYOUT_DISABLE) {
-    float fx = 0.f, fy = 0.f;
-    float row_max_obj_height = 0;
-    u32   objects_on_row = 0;
-    float right = subject->computed_size.x;
-    
-    for (u32 i = 0; i < subject->children_count; i++) {
-      UIObject *child = subject->children[i];
-
-      switch (current_layout.direction) {
-        case (UI_LAYOUT_DHORZVERT): {
-          if (child->computed_size.y > row_max_obj_height) {
-            row_max_obj_height = child->computed_size.y;
-          }
-          
-          if ((fx + current_layout.padding + child->computed_size.x) > (right - current_layout.margin) && objects_on_row > 0) {
-            fx = 0;
-            fy += row_max_obj_height + current_layout.padding;
-            row_max_obj_height = 0.f;
-            objects_on_row = 0;
-          }
-          objects_on_row++;
-          
-          child->computed_position.x = subject->computed_position.x + fx + current_layout.margin;
-          child->computed_position.y = subject->computed_position.y + fy + current_layout.margin;
-          
-          fx += child->computed_size.x + current_layout.padding;
-        } break;
-
-        case (UI_LAYOUT_DHORZ): {
-          p_UNIMPLEMENTED();
-        }
-        case (UI_LAYOUT_DVERT): {
-          p_UNIMPLEMENTED();
-        } break;
-
-        case (UI_LAYOUT_DISABLE):
-        default: {
-          subject->computed_position = glm::vec2(0.f);
-        } break;
-      }
+  
+  float remember_x = 0;
+  for (size_t i = 0; i < subject->children_count; i++) {
+    switch (current_layout.justify) {
+      case (UI_LAYOUT_JUST_START): {
+        ui_compute_just_start(subject, subject->children[i], &remember_x);
+      } break;
+      
+      case (UI_LAYOUT_JUST_CENTER): {
+        p_UNIMPLEMENTED();
+      } break;
+      
+      case (UI_LAYOUT_JUST_SPACE_AROUND): {
+        p_UNIMPLEMENTED();
+      } break;
+      
+      case (UI_LAYOUT_JUST_SPACE_BETWEEN): {
+        p_UNIMPLEMENTED();
+      } break;
     }
   }
   
+  // Percents
   glm::vec2 parent_pos = glm::vec2();
   glm::vec2 parent_size = state->window_size;
   if (subject->parent) {
@@ -196,11 +216,12 @@ static void ui_compute_layouts(UIObject *subject, UIState *state) {
     parent_size = subject->parent->computed_size;
   }
 
-  if (subject->position_units[0] == UI_UPERC) {
-    subject->computed_position.x = parent_pos.x + parent_size.x * subject->position.x;
+  glm::vec2 subject_pos = ui_compute_ui_vec2(subject, subject->position);
+  if (subject->position.unit_x == UI_UPERC) {
+    subject->computed_position.x = parent_pos.x + parent_size.x * subject_pos.x;
   }
-  if (subject->position_units[1] == UI_UPERC) {
-    subject->computed_position.y = parent_pos.y + parent_size.y * subject->position.y;
+  if (subject->position.unit_y == UI_UPERC) {
+    subject->computed_position.y = parent_pos.y + parent_size.y * subject_pos.y;
   }
   
   if (subject->center.x != 0.f && subject->center.y != 0.f) {
@@ -227,49 +248,13 @@ static inline void ui_draw_border(UIObject *subject, UIState *state) {
                       subject->border.size);
 }
 
-#define TEXT_DRAW_BUFFER_W 1920
-#define TEXT_DRAW_BUFFER_H 256
-static ALLEGRO_BITMAP *text_draw_buffer = 0;
-
 static inline void ui_draw_text(UIObject *subject, UIState *state) {
-  if (!text_draw_buffer) {
-    text_draw_buffer = al_create_bitmap(TEXT_DRAW_BUFFER_W, TEXT_DRAW_BUFFER_H);
-    if (text_draw_buffer == 0) {
-      fprintf(stderr, "[ERROR (UI, %s:%d)] Failed to create text_draw_buffer!\n", __FILE__, __LINE__);
-      exit(1);
-    }
-  }
-  
   // TODO(kay): Keep previously drawn text in a cache bitmap
-  ALLEGRO_BITMAP *previous_target = al_get_target_bitmap();
+  ALLEGRO_FONT *font = pfont_get_size(subject->text_font, (u32)subject->text_font_size);
   
-  al_set_target_bitmap(text_draw_buffer);
-  al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-  
-  int bbx = 0, bby = 0, bbw = 0, bbh = 0;
-  al_get_text_dimensions(subject->text_font, subject->text,
-                         &bbx, &bby, &bbw, &bbh);
-                         
-  int iterations = (int)ceilf((float)bbw / (float)TEXT_DRAW_BUFFER_W);
-  if (iterations <= 0) {
-    iterations = 1;
-  }
-  
-  float ratio = (float)bbh/(float)bbw;
-  float new_w = subject->text_font_size/ratio;
-
-  for (u32 iteration = 0; iteration < iterations; iteration++) {
-    al_set_target_bitmap(text_draw_buffer);
-    al_draw_text(subject->text_font, subject->pri_color,
-                  TEXT_DRAW_BUFFER_W*iteration, 0, 0, subject->text);
-
-    al_set_target_bitmap(previous_target);
-    al_draw_scaled_bitmap(text_draw_buffer,
-                          (float)bbx, (float)bby,
-                          (float)bbw, (float)bbh,
-                          subject->computed_position.x, subject->computed_position.y,
-                          new_w, subject->text_font_size, 0);
-  }
+  al_draw_text(font, subject->pri_color,
+               subject->computed_position.x, subject->computed_position.y, 
+               0, subject->text);
 }
 
 static inline void ui_draw_rect(UIObject *subject, UIState *state) {

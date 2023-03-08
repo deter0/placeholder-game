@@ -8,6 +8,7 @@
 #include <allegro5/bitmap.h>
 
 #include "p/p.h"
+#include "ui.h"
 #include "audio_manager.h"
 #include "resource_manager.h"
 
@@ -22,7 +23,7 @@ struct TextureAtlas {
 struct TileMapDataLayer {
   i32 layer_index;
   i32 *layer_tiles_data;
-  i32 layer_tiles_count;
+  u32 layer_tiles_count;
 };
 
 #define MAX_LAYER_POINTERS 32
@@ -55,4 +56,4 @@ p_fn err_code tr_save_tile_map_data_to_file(TileMap *tile_map, const char *file_
 p_fn err_code tr_map_provide_atlas(TileMap *tile_map, ALLEGRO_BITMAP *atlas, u32 texture_size, u32 texture_count);
 p_fn err_code tr_tile_map_cam_input(TileMap *map, ALLEGRO_KEYBOARD_STATE *state, double delta_time);
 
-p_fn err_code tr_tile_map_render(TileMap *map, float mouse_x, float mouse_y, ALLEGRO_KEYBOARD_STATE *state, bool debug);
+p_fn err_code tr_tile_map_render(TileMap *map, UIState *state, bool debug);

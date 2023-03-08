@@ -46,7 +46,8 @@ typedef enum err_code {
   
   // P Font, series (0xAE0)
   ERR_PF = 0x0AE0,
-  ERR_PF_ALLOC = 0xAE0
+  ERR_PF_ALLOC = 0xAE0,
+  ERR_PF_BAD_FONT = 0xAE1
 } err_code;
 
 #define p_ASSERT_ERR(err) if (err != ERR_OKAY) { \
@@ -74,6 +75,18 @@ typedef enum err_code {
                                                            0, ALLEGRO_MESSAGEBOX_ERROR); \
                           } \
                           exit(1);
+
+#define p_UNREACHABLE() char errorBuffer[1024] = {0}; \
+                        snprintf(errorBuffer, sizeof(errorBuffer), \
+                                "in function `%s` in file `%s:%d`: UNREACHABLE", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+                        errorBuffer[sizeof(errorBuffer)-1] = 0; \
+                        fprintf(stderr, "%s\n", errorBuffer); \
+                        if (al_is_native_dialog_addon_initialized()) { \
+                          al_show_native_message_box(NULL, \
+                                                         "Fatal Error", "Placeholder ran into a fatal error:", errorBuffer, \
+                                                         0, ALLEGRO_MESSAGEBOX_ERROR); \
+                        } \
+                        exit(1);
 
 #define p_byte u8
 
