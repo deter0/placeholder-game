@@ -108,7 +108,7 @@ static void ui_compute_sizes(UIObject *subject, UIState *state) {
   glm::vec2 parent_size = state->window_size;
   if (parent) {
     parent_size = parent->computed_size;
-    if (parent->layout.enable) {
+    if (false && parent->layout.enable) {
       parent_size -= glm::vec2(ui_compute_ui_val(parent, parent->layout.margin) * 2.f);
     }
   }
@@ -126,52 +126,51 @@ static void ui_compute_sizes(UIObject *subject, UIState *state) {
     fprintf(stderr, "[WARNING]: Text set on object but not font set. (Object ID: %d, Text: '%s')!\n", subject->object_id, subject->text);
   }
 
-  // float computed_size_x = 0.f;
-  // switch (subject->size_units[0]) {
-  //   case (UI_UPERC): {
-  //     computed_size_x = parent_size.x * subject->size.x;
-  //   } break;
+  float computed_size_x = 0.f;
+  switch (subject->size.unit_x) {
+    case (UI_UPERC): {
+      computed_size_x = parent_size.x * subject->size.val.x;
+    } break;
 
-  //   case (UI_UAUTO): {
-  //     if (text_size.x > 0 || text_size.y > 0) {
-  //       computed_size_x = text_size.x;
-  //     } else {
-  //       // Post Layout Position Computations
-  //       p_UNIMPLEMENTED();
-  //     }
-  //   } break;
+    case (UI_UAUTO): {
+      if (text_size.x > 0 || text_size.y > 0) {
+        computed_size_x = text_size.x;
+      } else {
+        // Post Layout Position Computations
+        p_UNIMPLEMENTED();
+      }
+    } break;
     
-  //   case (UI_UPIXS):
-  //   default: {
-  //     computed_size_x = subject->size.x;
-  //   } break;
-  // }
-  // subject->computed_size.x = computed_size_x;
+    case (UI_UPIXS):
+    default: {
+      computed_size_x = subject->size.val.x;
+    } break;
+  }
+  subject->computed_size.x = computed_size_x;
 
-  // float computed_size_y = 0.f;
-  // {
-  //   switch (subject->size.unit_x) {
-  //     case (UI_UPERC): {
-  //       computed_size_y = parent_size.y * subject->size.y;
-  //     } break;
+  float computed_size_y = 0.f;
+  {
+    switch (subject->size.unit_y) {
+      case (UI_UPERC): {
+        computed_size_y = parent_size.y * subject->size.val.y;
+      } break;
 
-  //     case (UI_UAUTO): {
-  //       if (text_size.x > 0 || text_size.y > 0) {
-  //         computed_size_y = text_size.y;
-  //       } else {
-  //         // Post Layout Position Computations
-  //         p_UNIMPLEMENTED();
-  //       }
-  //     } break;
+      case (UI_UAUTO): {
+        if (text_size.x > 0 || text_size.y > 0) {
+          computed_size_y = text_size.y;
+        } else {
+          // Post Layout Position Computations
+          p_UNIMPLEMENTED();
+        }
+      } break;
       
-  //     case (UI_UPIXS):
-  //     default: {
-  //       glm::vec2 size = ui_compute_ui_vec2(subject, subject->size);
-  //       computed_size_y = size.y;
-  //     } break;
-  //   }
-  // }
-  // subject->computed_size.y = computed_size_y;
+      case (UI_UPIXS):
+      default: {
+        computed_size_y = subject->size.val.y;
+      } break;
+    }
+  }
+  subject->computed_size.y = computed_size_y;
 }
 
 static void ui_compute_just_start(UIObject *parent, UIObject *child, float *remember_x) {
@@ -208,7 +207,7 @@ static void ui_compute_layouts(UIObject *subject, UIState *state) {
     }
   }
   
-  // Percents
+  // Percent Positions
   glm::vec2 parent_pos = glm::vec2();
   glm::vec2 parent_size = state->window_size;
   if (subject->parent) {
