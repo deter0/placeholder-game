@@ -198,24 +198,41 @@ p_private p_fn void init_tm_editor() {
   root_tm_editor->size.unit_x = UI_UPIXS;
   root_tm_editor->size.unit_y = UI_UPERC;
   root_tm_editor->pri_color = al_map_rgba(24, 24, 24, 255);
-  root_tm_editor->size.val = glm::vec2(275.f, 1.f);
+  root_tm_editor->size.val = glm::vec2(400.f, 1.f);
+  root_tm_editor->border.color = al_map_rgba(255, 255, 255, 255/2);
+  root_tm_editor->border.size = 1.f;
 
-  // root_tm_editor->layout.direction = UI_LAYOUT_DHORZVERT;
-  root_tm_editor->layout.margin.val = 20.f;
+  root_tm_editor->layout_x.enable  = true;
+  root_tm_editor->layout_x.justify = UI_LAYOUT_JSPACE_AROUND;
+  root_tm_editor->layout_x.margin  = 20.f;
+  root_tm_editor->layout_x.padding = 5.f;
+  memcpy(root_tm_editor->name, "hi", sizeof("hi"));
 
-  UIObject *container = ui_new_object();
-  // container->layout.direction = UI_LAYOUT_DHORZVERT;
-  container->layout.margin.val = 20.f;
-  container->layout.padding.val = 10.f;
+  UIObject *rectangle = ui_new_object();
+  rectangle->size.val = glm::vec2(100.f);
+  rectangle->pri_color = al_map_rgb(255, 36, 45);
+  ui_set_object_parent(rectangle, root_tm_editor);
   
-  for (u32 i = 0; i < 5; i++) {
-    UIObject *text_object = ui_new_object();
-    text_object->pri_color = al_map_rgb(255, 255, 255);
-    text_object->size.val = glm::vec2(50 + i*20, 50);
-    ui_set_object_parent(text_object, container);
-  }
+  rectangle = ui_new_object();
+  rectangle->size.val = glm::vec2(100.f);
+  rectangle->pri_color = al_map_rgb(255, 36, 45);
+  ui_set_object_parent(rectangle, root_tm_editor);
   
-  ui_set_object_parent(container, root_tm_editor);
+  rectangle = ui_new_object();
+  rectangle->size.val = glm::vec2(100.f);
+  rectangle->pri_color = al_map_rgb(255, 36, 45);
+  ui_set_object_parent(rectangle, root_tm_editor);
+  
+  // for (u32 i = 0; i < 5; i++) {
+  //   UIObject *text_object = ui_new_object();
+  //   text_object->pri_color = al_map_rgb(255, 255, 255);
+  //   text_object->size.val = glm::vec2(50 + i*20, 50);
+  //   ui_set_object_parent(text_object, container);
+  // }
+  
+  // ui_set_object_parent(container, root_tm_editor);
+  
+  printf("Inited debug UI!\n");
 }
 
 p_private p_fn void tr_draw_selection_ui(TileMap *map, UIState *state) {

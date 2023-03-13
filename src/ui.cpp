@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "ui.h"
+#include "ui_layouts.h"
 
 #include "resource_manager.h"
 #include "p/p.h"
@@ -108,8 +109,11 @@ static void ui_compute_sizes(UIObject *subject, UIState *state) {
   glm::vec2 parent_size = state->window_size;
   if (parent) {
     parent_size = parent->computed_size;
-    if (false && parent->layout.enable) {
-      parent_size -= glm::vec2(ui_compute_ui_val(parent, parent->layout.margin) * 2.f);
+    if (parent->layout_x.enable) {
+      parent_size.x -= parent->layout_x.margin * 2.f;
+    }
+    if (parent->layout_y.enable) {
+      parent_size.y -= parent->layout_y.margin * 2.f;
     }
   }
   
@@ -173,39 +177,49 @@ static void ui_compute_sizes(UIObject *subject, UIState *state) {
   subject->computed_size.y = computed_size_y;
 }
 
-static void ui_compute_just_start(UIObject *parent, UIObject *child, float *remember_x) {
-  child->computed_position.x = *remember_x;
-  (*remember_x) += child->computed_size.x + ui_compute_ui_val(parent, parent->layout.padding) + ui_compute_ui_val(parent, parent->layout.margin);
-}
-// TODO(kay): Layouts inside layouts with automatic sizes? Too complicated for now, do later.
-//            -> Can compute child layouts first and then figure out their size and then computer our layout.
 static void ui_compute_layouts(UIObject *subject, UIState *state) {
   for (u32 i = 0; i < subject->children_count; i++) {
     ui_compute_layouts(subject->children[i], state);
   }
   
-  UILayout current_layout = subject->layout;
+  UILayout current_layout = subject->layout_x;
   
-  float remember_x = 0;
-  for (size_t i = 0; i < subject->children_count; i++) {
-    switch (current_layout.justify) {
-      case (UI_LAYOUT_JUST_START): {
-        ui_compute_just_start(subject, subject->children[i], &remember_x);
-      } break;
-      
-      case (UI_LAYOUT_JUST_CENTER): {
+  if (current_layout.justify == UI_LAYOUT_JSPACE_AROUND || current_layout.justify == UI_LAYOUT_JSPACE_BETWEEN) {
+    float accum_sizes[MAX_UI_BULK_COMPUTATION];
+    size_t accum_sizes_count = 0;
+
+    for (size_t i = 0; i < subject->children_count; i++) {
+      assert(accum_sizes_count < MAX_UI_BULK_COMPUTATION);
+
+      accum_sizes[accum_sizes_count++] = subject->children[i]->computed_size.x;
+    }
+    
+    UILayoutBulkComputation computed = ui_layout_bulk_comp(subject->computed_size.x,
+                                                           (float*)accum_sizes,
+                                                           accum_sizes_count,
+                                                           current_layout);
+    for (size_t i = 0; i < computed.num_computations; i++) {
+      assert(i < subject->children_count);
+
+      subject->children[i]->computed_position.x = computed.computations[i].position;
+    }
+  } else {
+    UILayoutData pres_data_x = {0};
+    // UILayoutData pres_data_y = {0};
+    UILayoutComputation computed_x, computed_y;
+  
+    for (size_t i = 0; i < subject->children_count; i++) {
+      computed_x = ui_layout_get_next(subject->computed_size.x,
+                                      subject->children[i]->computed_size.x,
+                                      subject->layout_x,
+                                      &pres_data_x);
+      if (computed_x.wrapped) {
         p_UNIMPLEMENTED();
-      } break;
-      
-      case (UI_LAYOUT_JUST_SPACE_AROUND): {
-        p_UNIMPLEMENTED();
-      } break;
-      
-      case (UI_LAYOUT_JUST_SPACE_BETWEEN): {
-        p_UNIMPLEMENTED();
-      } break;
+      }
+      subject->children[i]->computed_position.x = computed_x.position;
     }
   }
+  
   
   // Percent Positions
   glm::vec2 parent_pos = glm::vec2();

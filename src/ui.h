@@ -27,16 +27,11 @@ enum UIUnit : u8 {
 };
 
 enum UILayoutJustify : u8 {
-  UI_LAYOUT_JUST_START = 0,
-  UI_LAYOUT_JUST_CENTER,
-  UI_LAYOUT_JUST_SPACE_BETWEEN,
-  UI_LAYOUT_JUST_SPACE_AROUND
-};
-
-enum UILayoutAlign : u8 {
-  UI_LAYOUT_ALIGN_START = 0,
-  UI_LAYOUT_ALIGN_CENTER,
-  UI_LAYOUT_ALIGN_END,
+  UI_LAYOUT_JSTART = 0,
+  UI_LAYOUT_JCENTER,
+  UI_LAYOUT_JSPACE_BETWEEN,
+  UI_LAYOUT_JSPACE_AROUND,
+  UI_LAYOUT_JEND
 };
 
 typedef struct UIValue {
@@ -55,12 +50,11 @@ typedef struct UIVec {
 typedef struct UILayout {
   u8 enable;
   enum UILayoutJustify justify;
-  enum UILayoutAlign   align;
 
   // Padding -> space between elements (e.g. [ ]xxxx[ ])
-  UIValue padding;
+  float padding;
   // Margin -> space around edges of container
-  UIValue margin;
+  float margin;
 } UILayout;
 
 typedef struct UIBorder {
@@ -76,7 +70,7 @@ typedef struct UIObject {
   UIVec size;
   UIVec position;
   
-  // Center Unit -> Percent (%)
+  // Center Unit is percent (%)
   glm::vec2 center;
   
   glm::vec2 computed_size;
@@ -92,7 +86,8 @@ typedef struct UIObject {
   
   ALLEGRO_BITMAP *image;
 
-  UILayout layout;
+  UILayout layout_x;
+  UILayout layout_y;
 
   u32 children_count;
   u32 children_max;

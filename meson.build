@@ -1,4 +1,4 @@
-project('placeholder', 'c', 'cpp')
+project('placeholder', 'cpp')
 
 sources = [
   './src/main.cpp',
@@ -9,6 +9,7 @@ sources = [
   './src/resource_manager.cpp',
   './src/audio_manager.cpp',
   './src/ui.cpp',
+  './src/ui_layouts.cpp',
   './src/pfont.cpp'
 ]
 
